@@ -1,0 +1,40 @@
+# Blueprint do Render: um serviço web gratuito (Docker) com API + painel.
+# Segredos ficam com "sync: false": o Render pede o valor no painel dele na
+# criação, e eles nunca entram no repositório.
+services:
+  - type: web
+    name: info-mare
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: AISSTREAM_API_KEY
+        sync: false
+      # Caixas do AIS: [[[lat_min, lon_min], [lat_max, lon_max]], ...]
+      - key: AIS_CAIXAS
+        value: "[[[-56.0, -73.0], [6.0, -25.0]]]"
+      # No máximo 1 posição por navio a cada N segundos no banco
+      - key: AIS_INTERVALO_GRAVACAO_S
+        value: "60"
+      # Painel e API na mesma origem: CORS desligado
+      - key: CORS_ALLOW_ORIGINS
+        value: ""
+      - key: CONFIAR_X_FORWARDED_FOR
+        value: "1"
+      - key: LIMITE_REQ_POR_MIN
+        value: "120"
+      - key: CALCULADORA_CALADO_ATIVA
+        value: "0"
+      # Litestream (Cloudflare R2 ou Backblaze B2). Vazio = sem backup.
+      - key: LITESTREAM_BUCKET
+        sync: false
+      - key: LITESTREAM_ENDPOINT
+        sync: false
+      - key: LITESTREAM_ACCESS_KEY_ID
+        sync: false
+      - key: LITESTREAM_SECRET_ACCESS_KEY
+        sync: false

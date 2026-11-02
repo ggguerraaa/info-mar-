@@ -1,0 +1,25 @@
+# Segredos: nunca no repositório (o .env.example, só com nomes, fica)
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Banco local (em produção vem do Litestream)
+ais-service/data/*.db
+ais-service/data/*.db-wal
+ais-service/data/*.db-shm
+ais-service/data/rss.xml
+
+# Node / Next
+painel/node_modules/
+painel/.next/
+painel/out/
+painel/public/maplibre/
+painel/*.tsbuildinfo
+painel/next-env.d.ts
+
+.DS_Store

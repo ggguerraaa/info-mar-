@@ -1,0 +1,512 @@
+Documentação
+Estatístico Aquaviário
+versão 1.0
+2026
+Documentação do Estatístico Aquaviário
+Sumário
+1. Informações Metodológicas ................................................................................. 3
+1.1. Aspectos Metodológicos da Obtenção das Estatísticas do Painel do EA ........ 3
+1.1.1. Tempo .................................................................................................... 3
+1.1.2. Movimentação ........................................................................................ 3
+1.1.3. Transporte.............................................................................................. 4
+1.1.4. Tipo de Instalação Portuária .................................................................. 5
+1.1.5. Mercadorias ........................................................................................... 6
+1.1.6. Distância para TKU ................................................................................ 6
+1.1.7. Hidrovias ................................................................................................ 6
+1.2. Cálculo dos indicadores .............................................................................. 7
+1.2.1. Ranking de Movimentação ..................................................................... 7
+1.2.2. Quantidade de Atracações ..................................................................... 7
+1.2.3. Consignação Média ............................................................................... 7
+1.2.4. Tempos Médios ..................................................................................... 9
+1.2.5. Prancha Média Operacional e Geral .................................................... 10
+1.2.6. Taxa de Ocupação ............................................................................... 11
+1.2.7. Tipos de Paralisação ............................................................................ 12
+Página 2 de 13
+Documentação do Estatístico Aquaviário
+1. Informações Metodológicas
+O Sistema de Desempenho Portuário — SDP é a principal fonte de dados para
+disponibilização das estatísticas apresentadas no Estatístico Aquaviário. Os dados
+presentes no SDP são declarados pelas Autoridades Portuárias (portos organizados) e
+pelos Terminais Autorizados pela ANTAQ, sendo estes dados recebidos diariamente via
+arquivos ou por preenchimento em formulário do próprio sistema SDP. Há, também, a
+agregação de dados da hidrovia Paraná-Tietê enviados mensalmente em planilha pela
+Administração da Hidrovia do Paraná — Ahrana.
+1.1. Aspectos Metodológicos da Obtenção das Estatísticas
+do Painel do EA
+Para utilizar o EA no seu máximo potencial, convém compreender o domínio, isto é,
+o conjunto de conceitos, entidades, processos, restrições e relações do mundo real que
+dão sentido ao sistema. Nessa documentação, os elementos do domínio são
+apresentados seccionados por subdomínios.
+1.1.1. Tempo
+Os atributos de tempo (ano, mês, trimestre e semestre) são obtidos tendo como
+referência a data de desatracação da embarcação.
+1.1.2. Movimentação
+A página de Movimentação Portuária contém a movimentação de carga pelos
+seguintes perfis de carga: (i) granel sólido, (ii) granel líquido e gasoso, (iii) carga geral e
+(iv) carga conteinerizada; para a computação da última, é considerado o peso bruto do
+contêiner (soma da tara com o peso líquido das mercadorias no interior do contêiner).
+Caso o interesse do usuário seja em consultar as mercadorias no interior dos
+contêineres, este deve acessar a página de Movimentação Contêiner.
+Por meio de um clique na dimensão localizada no eixo y do gráfico, a informação de
+movimentação portuária pode ser agrupada por diferentes critérios. As possibilidades
+são: instalação portuária, instalação de acostagem, nome da área e empresa (GR1.3 e
+GR2.3 – Instalação portuária).
+• Instalação Portuária: portos organizados e terminais autorizados que informaram a
+atracação e a movimentação de cargas.
+• Complexo Portuário: nome do complexo portuário ao qual pertence a instalação
+portuária. O complexo portuário considera critérios de recorte territorial, facilidades
+Página 3 de 13
+Documentação do Estatístico Aquaviário
+logísticas terrestres e/ou aquaviárias e esfera político-administrativa, com base em
+metodologia elaborada pela ANTAQ.
+• Instalação Portuária — Acostagem: nome adotado pela autoridade portuária ou
+terminal autorizado para representar a instalação de acostagem, que aglutina um
+conjunto de berços da instalação portuária.
+• Instalação Portuária — Nome da Área1: nome adotado pela autoridade portuária para
+identificar uma área específica dentro do porto organizado, correspondendo à origem (no
+embarque) ou destino (no desembarque) da carga para armazenagem antes da saída
+definitiva do porto. Caso a carga embarcada tenha origem fora do porto organizado (ou a
+carga desembarcada tenha destino fora do porto), o nome da área apresentado será
+"embarque/desembarque direto". Para os terminais autorizados, o nome da área é a
+própria instalação portuária.
+• Instalação Portuária - Empresa1: nome da empresa (razão social) responsável pela
+área dentro do porto organizado, obtido da associação do nome da área com o cadastro
+de empresa. Caso o nome da área seja "embarque/desembarque direto", esta
+movimentação não será apresentada na visualização das informações por empresa. Para
+os terminais autorizados, a empresa é a sua razão social.
+A movimentação de carga corresponde às operações de embarque e desembarque
+de carga na instalação portuária. Para obtenção da movimentação, o EA considera
+somente as seguintes operações de carga:
+1 – Movimentação da Carga;
+3 – Apoio;
+13 – Longo Curso Exportação;
+14 – Longo Curso Importação;
+15 – Longo Curso Exportação com Baldeação de Carga Estrangeira;
+16 – Longo Curso Importação com Baldeação de Carga Estrangeira;
+17 – Cabotagem;
+18 – Interior;
+19 – Baldeação de Carga Nacional; e
+20 – Baldeação de Carga Estrangeira de Passagem.
+Na base de dados do EA, o atributo FlagMCOperacaoCarga com valor “1” representa essas
+operações.
+Além dessa condição, somente são considerados os dados provenientes do SDP para
+cálculo da movimentação, sendo que o atributo FlagAutorizacao deve ter o valor “S” para tal
+registro. Os dados recebidos da Ahrana não são contabilizados para efeitos de transporte, pois
+não contém os dados necessários para cálculo da movimentação, sendo somente utilizados para
+o cálculo do transporte em Vias Interiores entre instalações.
+1.1.3. Transporte
+O transporte corresponde ao deslocamento da carga entre portos e é calculado pelo
+desembarque da carga, ou seja, por meio do atributo sentido, conforme a seguir:
+• Longo Curso: navegação realizada entre portos brasileiros e estrangeiros. No EA
+considera-se as cargas onde o atributo sentido contém os valores “Desembarque” e
+“Embarque”. Para apurar o transporte de Longo Curso foi criado o atributo FlagLongoCurso
+com valor “1”.
+1 Essas informações de movimentação portuária estão disponíveis a partir do ano de 2023.
+Página 4 de 13
+Documentação do Estatístico Aquaviário
+• Cabotagem: transporte realizado entre portos ou pontos do território brasileiro, utilizando
+a via marítima ou via marítima e as vias navegáveis interiores. No EA considera-se
+somente as cargas onde o atributo sentido contém o valor “Desembarque”. Para apurar
+o transporte de cabotagem foi criado o atributo FlagCabotagem com valor “1”.
+• Vias Interiores: abrange a navegação interior, realizada em hidrovias interiores em
+percurso nacional ou internacional, e parte da navegação de cabotagem realizada em
+hidrovias interiores. No EA considera-se somente as cargas onde o atributo sentido
+contém o valor “Desembarque”. Para apurar o transporte em Vias Interiores foi criado o
+atributo FlagTransporteViaInterior com valor “1”.
+1.1.4. Tipo de Instalação Portuária2
+1.1.4.1. Terminal Autorizado
+Instalação explorada mediante autorização, localizada fora da área do porto
+organizado e utilizada em movimentação de passageiros, em movimentação ou
+armazenagem de mercadorias, destinadas ou provenientes de transporte aquaviário,
+compreendendo as modalidades:
+a) Terminal de uso privado: instalação portuária explorada mediante
+autorização e localizada fora da área do porto organizado;
+b) Estação de transbordo de cargas: instalação portuária explorada mediante
+autorização, localizada fora da área do porto organizado e utilizada
+exclusivamente para operação de transbordo de mercadorias em
+embarcações de navegação interior ou cabotagem;
+c) Instalação portuária pública de pequeno porte: instalação portuária
+explorada mediante autorização, localizada fora do porto organizado e
+utilizada em movimentação de passageiros ou mercadorias em embarcações
+de navegação interior; e
+d) Instalação portuária de turismo: instalação portuária explorada mediante
+arrendamento ou autorização e utilizada em embarque, desembarque e
+trânsito de passageiros, tripulantes e bagagens, e de insumos para o
+provimento e abastecimento de embarcações de turismo.
+1.1.4.2. Porto Organizado
+Bem público construído e aparelhado para atender as necessidades de navegação,
+de movimentação de passageiros ou de movimentação e armazenagem de mercadorias,
+e cujo tráfego e operações portuárias estejam sob jurisdição de autoridade portuária.
+1.1.4.3. Instalação Portuária
+Instalação localizada dentro ou fora da área do porto organizado e utilizada em
+movimentação de passageiros, em movimentação ou armazenagem de mercadorias,
+destinadas ou provenientes de transporte aquaviário
+2 Fonte: LEI Nº 12.815, DE 5 DE JUNHO DE 2013.
+Página 5 de 13
+Documentação do Estatístico Aquaviário
+1.1.5. Mercadorias
+As mercadorias são classificadas de acordo com a Nomenclatura Comum do
+Mercosul (NCM) para os perfis de carga Granel Sólido, Granel Líquido e Carga Geral,
+sendo obrigatório o preenchimento dos 4 (quatro) primeiros dígitos do NCM.
+Para o perfil de carga conteinerizada são utilizados os códigos ISO (iso code
+types) para Contêineres e, para as mercadorias no interior dos contêineres, a
+Nomenclatura Comum do Mercosul (NCM).
+1.1.6. Distância para TKU
+A estimativa da distância entre as instalações portuárias de origem e destino da
+carga é calculada em quilômetros e obtida por meio do Sistema de Informações
+Geográficas da ANTAQ, o SIGTAQ. Com a localização geográfica da instalação portuária
+de origem e destino conectadas a malha aquaviária, o software calcula o menor percurso
+possível (distância) entre as instalações portuárias.
+Para obtenção da distância percorrida nas hidrovias, constantes no trajeto entre as
+instalações portuárias de origem e destino da carga, utilizou-se como centroides de
+referência os portos organizados e/ou terminais autorizados com grande movimentação
+de carga no município. As distâncias entre os centroides de referência e o final da
+hidrovia foram utilizadas como parâmetro para a extensão da hidrovia.
+1.1.7. Hidrovias
+A nomenclatura e delimitações das hidrovias são estabelecidas de acordo com o
+primeiro Plano de Geral de Outorgas (PGO) Hidroviário, elaborado pela ANTAQ, sendo:
+• Hidrovia do Solimões: Rios Solimões e Negro até Manaus (excluindo Manaus);
+• Hidrovia do Amazonas: Rio Amazonas de Manaus3 até Itacoatiara (incluindo
+Itacoatiara);
+• Hidrovia do Baixo Amazonas: Rio Amazonas de Itacoatiara até a foz do Amazonas
+(Barra Norte);
+• Hidrovia do Madeira: Rio Madeira de Porto Velho à foz;
+• Hidrovia do Paraná-Tietê: Rios Paranaíba, Paraná, Tietê, Piquiri, São José dos
+Dourados e no Canal Pereira Barreto;
+3 Embora os terminais portuários de Manaus estejam situados na foz do Rio Negro, eles foram incluídos na
+Hidrovia do Amazonas.
+Página 6 de 13
+Documentação do Estatístico Aquaviário
+• Hidrovia do Rio Paraguai: Rio Paraguai de Cáceres à foz do rio Apa;
+• Hidrovia do Tapajós: Rio Tapajós de Itaituba até Santarém (excluindo Santarém);
+• Hidrovia do Trombetas: Rio Trombetas do Porto trombetas até a foz;
+• Hidrovia do Baixo Tocantins: Estreitos, Baía do Marajó e Baía do Marapatá;
+• Hidrovia do Tocantins: Rio Tocantins até à foz do rio;
+• Hidrovia do Sul: Rios Jacuí, Taquari, Lagoa dos Patos até o Porto de Rio Grande;
+• Hidrovia da Lagoa Mirim: Lagoa Mirim de Santa Vitória do Palmar até Pelotas
+(excluindo Pelotas);
+1.2. Cálculo dos indicadores
+1.2.1. Ranking de Movimentação
+Posicionamento relativo das instalações portuárias perante à lista de instalações
+ordenada de forma decrescente segundo as respectivas somas dos pesos das cargas
+movimentadas durante um período especificado. Somente são consideradas no cálculo
+as atracações com tipo de operação de carga: Movimentação de Carga, Apoio,
+Transbordo, Longo Curso Exportação, Longo Curso Importação, Longo Curso
+Exportação com Baldeação de Carga Estrangeira, Longo Curso Importação com
+Baldeação de Carga Estrangeira, Cabotagem, Interior, Baldeação de Carga Nacional e
+Baldeação de Carga Estrangeira de Passagem.
+1.2.2. Quantidade de Atracações
+O cálculo da contagem de atracações, durante um período especificado, pode ser
+obtido de duas formas:
+i. Para as atracações com movimentação de carga - considera somente no
+cálculo os tipos de operação de carga: Movimentação de Carga, Apoio,
+Transbordo, Longo Curso Exportação, Longo Curso Importação, Longo Curso
+Exportação com Baldeação de Carga Estrangeira, Longo Curso Importação
+com Baldeação de Carga Estrangeira, Cabotagem, Interior, Baldeação de
+Carga Nacional e Baldeação de Carga Estrangeira de Passagem; ou
+ii. Para atracações com todos os tipos de operação - compreende as atracações
+de movimentação de carga acrescidas dos tipos de operação de carga:
+Abastecimento, Safamento, Remoção a bordo, Operação Intermediária e
+Transferência Interna.
+Quando são feitas seleções sobre as dimensões de carga, o indicador é calculado
+levando-se em conta apenas as atracações que movimentaram exclusivamente as
+cargas correspondentes aos filtros.
+1.2.3. Consignação Média
+A Consignação Média (CM) é um indicador medido em unidades (carregadas e/ou
+descarregadas) por navio quando se trata da movimentação de contêineres e em
+toneladas (carregadas e/ou descarregadas) por navio para os demais grupos de
+mercadoria. O indicador expressa a movimentação média de cargas por atracação nas
+Página 7 de 13
+Documentação do Estatístico Aquaviário
+instalações portuárias. A exibição dos valores é condicionada à seleção de um perfil de
+carga ou à designação de mercadorias. Os valores são calculados levando-se em conta
+apenas as atracações que movimentaram exclusivamente as cargas correspondentes
+aos filtros. A CM pode, então, ser definida por:
+𝑛
+1
+𝐶𝑀 = ×∑𝑁 ,𝑝𝑎𝑟𝑎 𝑚𝑜𝑣𝑖𝑚𝑒𝑛𝑡𝑎çã𝑜 𝑑𝑒 𝑐𝑜𝑛𝑡ê𝑖𝑛𝑒𝑟𝑒𝑠
+𝑛 𝑐𝑜𝑛𝑡,𝑗
+𝑗=1
+𝑛
+1
+𝐶𝑀 = ×∑𝑃𝑒𝑠𝑜 ,𝑝𝑎𝑟𝑎 𝑜𝑠 𝑑𝑒𝑚𝑎𝑖𝑠 𝑔𝑟𝑢𝑝𝑜𝑠 𝑑𝑒 𝑚𝑒𝑟𝑐𝑎𝑑𝑜𝑟𝑖𝑎𝑠
+𝑛 𝑗
+𝑗=1
+onde:
+• 𝑁 é o total de unidades de contêineres movimentados no navio j;
+𝑐𝑜𝑛𝑡,𝑗
+• 𝑃𝑒𝑠𝑜 é o peso total movimentado no caso dos demais grupos de mercadorias, em
+𝑗
+toneladas, no navio j;
+• 𝑛 é o total de navios desatracados no período em estudo.
+1. Características interessantes do indicador
+a) Se o valor da consignação média de um tipo de mercadoria em uma
+instalação portuária é alto, então os navios estão operando mais
+carregados no porto. Pode-se inferir, portanto que, em tese, a dragagem,
+tanto do porto quanto do canal de acesso, tem sido bem executada ao
+longo do tempo, mantendo em um bom valor o calado da instalação em
+geral;
+b) Pode-se também imaginar que existe uma boa demanda da mercadoria em
+estudo na hinterlândia da instalação portuária, haja vista a concentração
+de carga que está chegando ou saindo dela.
+2. Metodologia de cálculo do indicador
+a) Considera-se sempre como referência a data de desatracação da
+embarcação para identificação dos navios que desatracaram durante um
+período de estudo desejado, seja no berço, seja na instalação portuária.
+Ademais, Serão considerados apenas as embarcações que movimentaram
+o tipo de carga que se deseja apurar (carga conteinerizada ou outro tipo de
+mercadoria). A escolha do tipo de mercadoria é necessária para o cálculo
+da consignação média.
+b) Para cada atracação, identifica-se o total de unidades de contêineres
+movimentado, 𝑁 , quando se tratar de carga conteinerizada, ou o peso
+𝑐𝑜𝑛𝑡,𝑗
+total movimentado, 𝑃𝑒𝑠𝑜 , quando se tratar de outro tipo de mercadoria.
+𝑗
+c) Faz-se a soma de todos os 𝑁 (ou 𝑃𝑒𝑠𝑜 ) para obter o valor total da
+𝑐𝑜𝑛𝑡,𝑗 𝑗
+movimentação, em unidades de contêineres (ou toneladas de carga).
+Página 8 de 13
+Documentação do Estatístico Aquaviário
+d) Por fim, faz-se a divisão do total movimentado pelo número de navios
+desatracados 𝑛 para determinação da consignação média — CM — de
+acordo com a formulação descrita no item b).
+A Consignação Média inclui somente as atracações com movimentação de carga,
+ou seja, considera no cálculo somente os tipos de operação de carga: Movimentação de
+Carga, Apoio, Transbordo, Longo Curso Exportação, Longo Curso Importação, Longo
+Curso Exportação com Baldeação de Carga Estrangeira, Longo Curso Importação com
+Baldeação de Carga Estrangeira, Cabotagem, Interior, Baldeação de Carga Nacional e
+Baldeação de Carga Estrangeira de Passagem.
+As atracações EXCLUSIVAS são aquelas que operaram um único perfil de carga ou
+mercadoria.
+1.2.4. Tempos Médios
+• Tempo para atracação (𝑻 ): é definido como sendo a diferença entre a data/hora
+𝟏
+de atracação do navio e a data/hora de chegada do mesmo à área de fundeio.
+Inclui o tempo de viagem pelo canal de acesso e eventual tempo de espera para
+atracação do navio.
+• Tempo para início de operação (𝑻 ): é definido como sendo a diferença entre a
+𝟐
+data/hora de início de operação do navio e a data/hora de atracação deste. Trata-
+se do tempo em que o navio, já atracado, espera para que se inicie a operação
+de carga/descarga.
+• Tempo de operação (𝑻 ): é definido como sendo a diferença entre a data/hora
+𝟑
+de término da operação do navio e a data/hora de início dessa operação. Este é
+o tempo que se usa para calcular a Prancha Média Operacional (PMO).
+• Tempo de desatracação (𝑻 ): é definido como sendo a diferença entre a
+𝟒
+data/hora de desatracação do navio e a data/hora de término da operação. Trata-
+se do tempo em que o navio aguarda no berço até a sua desatracação, para iniciar
+a viagem de saída da instalação portuária.
+• Tempo atracado (𝑻 ): é definido como a soma de todos os tempos onde a
+𝑨
+embarcação permaneceu no berço da instalação portuária, ou seja, 𝑇 = 𝑇 +𝑇 +
+𝐴 2 3
+𝑇 . Este é o tempo que se usa para calcular a Prancha Média Geral (PMG).
+4
+• Tempo de estadia (𝑻 ): é definido como a soma de todos os tempos desde a
+𝑬
+chegada do navio na área de fundeio até a sua desatracação do berço, ou seja,
+𝑇 = 𝑇 +𝑇 +𝑇 +𝑇 .
+𝐸 1 2 3 4
+Propriedades importantes:
+𝐷𝑎𝑡𝑎/ℎ𝑜𝑟𝑎 𝑑𝑎 𝐶ℎ𝑒𝑔𝑎𝑑𝑎 ≤ 𝐷𝑎𝑡𝑎/ℎ𝑜𝑟𝑎 𝑑𝑎 𝐴𝑡𝑟𝑎𝑐𝑎çã𝑜 < 𝐷𝑎𝑡𝑎/
+ℎ𝑜𝑟𝑎 𝑑𝑒 𝐼𝑛í𝑐𝑖𝑜 𝑑𝑒 𝑂𝑝𝑒𝑟𝑎çã𝑜 < 𝐷𝑎𝑡𝑎/ℎ𝑜𝑟𝑎 𝑑𝑒 𝐹𝑖𝑛𝑎𝑙 𝑑𝑒 𝑂𝑝𝑒𝑟𝑎çã𝑜 < 𝐷𝑎𝑡𝑎/
+ℎ𝑜𝑟𝑎 𝑑𝑒 𝐷𝑒𝑠𝑎𝑡𝑟𝑎𝑐𝑎çã𝑜
+A ilustração abaixo mostra a sequência de maneira didática.
+Página 9 de 13
+Documentação do Estatístico Aquaviário
+Os tempos médios podem ser calculados de duas formas:
+1. Para as atracações com movimentação de carga: considera somente no
+cálculo os tipos de operação de carga: Movimentação de Carga, Apoio,
+Transbordo, Longo Curso Exportação, Longo Curso Importação, Longo Curso
+Exportação com Baldeação de Carga Estrangeira, Longo Curso Importação
+com Baldeação de Carga Estrangeira, Cabotagem, Interior, Baldeação de
+Carga Nacional e Baldeação de Carga Estrangeira de Passagem; ou
+2. Para atracações com todos os tipos de operação: compreende as atracações
+de movimentação de carga acrescidas dos tipos de operação de carga:
+Abastecimento, Safamento, Remoção a bordo, Operação Intermediária e
+Transferência Interna.
+1.2.5. Prancha Média Operacional e Geral
+A Prancha Média é um indicador de suma importância, que mede a produtividade
+média de uma instalação portuária ou berço em um determinado período de tempo (mês,
+bimestre, ano, ...) em relação a um grupo específico de mercadorias. Sua medida pode
+ser feita em relação ao tempo de operação (𝑇 ) ou ao tempo atracado (𝑇 ) dos navios,
+3 𝐴
+sempre utilizando atracações de movimentação EXCLUSIVA do segmento alvo.
+1.2.5.1. Prancha Média Geral (PMG)
+A Prancha Média Geral (PMG) é obtida pela divisão do somatório total de unidades
+de contêineres movimentados, 𝑁 , pelo tempo total atracado dos navios, 𝑇 . Para
+𝑐𝑜𝑛𝑡,𝑖 𝐴
+outros tipos de mercadorias, é obtida pela divisão do somatório total de toneladas de
+carga movimentada, 𝑃𝑒𝑠𝑜 , pelo tempo total atracado dos navios, 𝑇 .
+𝑖 𝐴
+𝑛
+1
+𝑃𝑀𝐺 = ×∑𝑁 [𝑢𝑛𝑖𝑑𝑎𝑑𝑒𝑠/ℎ𝑜𝑟𝑎],𝑝𝑎𝑟𝑎 𝑚𝑜𝑣𝑖𝑚𝑒𝑛𝑡𝑎çã𝑜 𝑑𝑒 𝑐𝑜𝑛𝑡ê𝑖𝑛𝑒𝑟𝑒𝑠
+𝑇 𝑐𝑜𝑛𝑡,𝑖
+𝐴
+𝑖=1
+𝑛
+1
+𝑃𝑀𝐺 = ×∑𝑃𝑒𝑠𝑜 [𝑡𝑜𝑛𝑒𝑙𝑎𝑑𝑎𝑠/ℎ𝑜𝑟𝑎],𝑝𝑎𝑟𝑎 𝑜𝑠 𝑑𝑒𝑚𝑎𝑖𝑠 𝑔𝑟𝑢𝑝𝑜𝑠 𝑑𝑒 𝑚𝑒𝑟𝑐𝑎𝑑𝑜𝑟𝑖𝑎𝑠
+𝑇 𝑖
+𝐴
+𝑖=1
+1.2.5.2. Prancha Média Operacional (PMO)
+A Prancha Média Operacional (PMO) é obtida pela divisão do somatório total de
+unidades de contêineres movimentados, 𝑁 , pelo tempo total de operação dos navios
+𝑐𝑜𝑛𝑡,𝑖
+(𝑇 ). Para outros tipos de mercadorias, é obtida pela divisão do somatório total de
+3
+toneladas de carga movimentada, 𝑃𝑒𝑠𝑜 , pelo tempo total de operação dos navios, 𝑇 .
+𝑖 3
+𝑛
+1
+𝑃𝑀𝑂 = ×∑𝑁 [𝑢𝑛𝑖𝑑𝑎𝑑𝑒𝑠/ℎ𝑜𝑟𝑎],𝑝𝑎𝑟𝑎 𝑚𝑜𝑣𝑖𝑚𝑒𝑛𝑡𝑎çã𝑜 𝑑𝑒 𝑐𝑜𝑛𝑡ê𝑖𝑛𝑒𝑟𝑒𝑠
+𝑇 𝑐𝑜𝑛𝑡,𝑖
+3
+𝑖=1
+𝑛
+1
+𝑃𝑀𝑂 = ×∑𝑃𝑒𝑠𝑜 [𝑡𝑜𝑛𝑒𝑙𝑎𝑑𝑎𝑠/ℎ𝑜𝑟𝑎],𝑝𝑎𝑟𝑎 𝑜𝑠 𝑑𝑒𝑚𝑎𝑖𝑠 𝑔𝑟𝑢𝑝𝑜𝑠 𝑑𝑒 𝑚𝑒𝑟𝑐𝑎𝑑𝑜𝑟𝑖𝑎𝑠
+𝑇 𝑖
+3
+𝑖=1
+Página 10 de 13
+Documentação do Estatístico Aquaviário
+As pranchas Média Operacional e Geral podem ser calculadas de duas formas:
+1. Para as atracações com movimentação de carga — considera somente no
+cálculo os tipos de operação de carga: Movimentação de Carga, Apoio,
+Transbordo, Longo Curso Exportação, Longo Curso Importação, Longo Curso
+Exportação com Baldeação de Carga Estrangeira, Longo Curso Importação
+com Baldeação de Carga Estrangeira, Cabotagem, Interior, Baldeação de
+Carga Nacional e Baldeação de Carga Estrangeira de Passagem; ou
+2. Para atracações com todos os tipos de operação — compreende as
+atracações de movimentação de carga acrescidas dos tipos de operação de
+carga: Abastecimento, Safamento, Remoção a bordo, Operação Intermediária
+e Transferência Interna.
+Obs.: Os tempos de operação atípicos não são considerados na fórmula da Prancha
+Média Operacional, bem como, a movimentação associada a esses tempos.
+1.2.6. Taxa de Ocupação
+A Taxa de Ocupação de um berço, 𝑇𝑂 , é o valor obtido pela divisão do tempo total
+𝑗
+ocupado, 𝑡𝑜𝑐 , de um determinado berço 𝑗 de uma instalação portuária pelo tempo de
+𝑗
+estudo 𝑡. Trata-se de um indicador adimensional, que pode ser expresso em %.
+𝑡𝑜𝑐
+𝑗
+𝑇𝑂 = ,𝑝𝑎𝑟𝑎 𝑐𝑎𝑑𝑎 𝑢𝑚 𝑑𝑜𝑠 𝑛 𝑏𝑒𝑟ç𝑜𝑠 𝑑𝑎 𝑖𝑛𝑠𝑡𝑎𝑙𝑎çã𝑜 𝑝𝑜𝑟𝑡𝑢á𝑟𝑖𝑎
+𝑗 𝑡
+A Taxa de Ocupação de uma instalação portuária, 𝑇𝑂 , é o valor obtido pela média
+𝐼𝑃
+aritmética das taxas de ocupação de cada um dos berços pertencentes à instalação
+portuária. Trata-se de um indicador adimensional, que pode ser expresso em %.
+𝑛
+1
+𝑇𝑂 = ×∑𝑇𝑂 ,𝑝𝑎𝑟𝑎 𝑢𝑚𝑎 𝑖𝑛𝑡𝑎𝑙𝑎çã𝑜 𝑝𝑜𝑟𝑡𝑢á𝑟𝑖𝑎 𝑐𝑜𝑚 𝑛 𝑏𝑒𝑟ç𝑜𝑠
+𝐼𝑃 𝑛 𝑗
+𝑗=1
+Definições básicas:
+a) O tempo de atracação, 𝑡 , de um navio 𝑖 é definido pela diferença entre a
+𝑖
+“Data/Hora da Desatracação” e “Data/Hora da Atracação” do navio. A unidade
+de medida é em dias.
+b) O tempo total ocupado, 𝑡𝑜𝑐 , de um berço 𝑗 é definido como sendo a soma de
+𝑗
+todos os tempos de atracação daqueles navios que ficaram no berço. A
+unidade de medida é em dias.
+c) O tempo de estudo 𝑡 é definido como o total de dias existente no período em
+estudo (janeiro = 31 dias, ano 2021 = 365 dias).
+Propriedades:
+a) 0% ≤ 𝑇𝑂 ≤ 100% e 0% ≤ 𝑇𝑂 ≤ 100%.
+𝑗 𝐼𝑃
+b) 𝑡 ≤ 𝑡𝑜𝑐 para qualquer navio 𝑖 que tenha atracado no berço 𝑗.
+𝑖 𝑗
+c) 𝑡𝑜𝑐 ≤ 𝑡, para qualquer berço 𝑗 da instalação portuária.
+𝑗
+Metodologia de cálculo dos indicadores:
+1. Taxa de Ocupação de um berço (𝑇𝑂 ):
+𝑗
+Página 11 de 13
+Documentação do Estatístico Aquaviário
+a) Identifica-se quais são os navios que atracaram no berço durante o
+tempo de estudo, considerando como ponto sempre a data de
+desatracação da embarcação;
+b) Para cada atracação, faz-se a diferença entre “Data/Hora da
+Desatracação” e “Data/Hora da Atracação” (𝑡 ) e em seguida soma-se
+𝑖
+o valor de todos os seus intervalos (𝑡𝑜𝑐 );
+𝑗
+c) Deve-se identificar se existe, na lista de atracações, alguma com
+sobreposição de intervalos. Essas sobreposições precisam ser
+subtraídas para que não sejam contabilizadas múltiplas vezes;
+d) Faz-se a soma de todos os 𝑡 para obter o valor de 𝑡𝑜𝑐 ;
+𝑖 𝑗
+e) Por fim, faz-se a divisão do tempo total ocupado (𝑡𝑜𝑐 ) de um
+𝑗
+determinado berço 𝑗 de uma instalação portuária pelo tempo de estudo
+𝑡 para determinação da taxa de ocupação do berço (𝑇𝑂 ).
+𝑗
+2. Taxa de Ocupação de uma instalação portuária (𝑇𝑂 ):
+𝐼𝑃
+a) Para a instalação portuária, calcula-se em cada um de seus berços a
+taxa de ocupação do berço (𝑇𝑂 ) de acordo com o procedimento
+𝑗
+descrito anteriormente;
+b) Faz-se então a média aritmética das taxas de ocupação de cada um
+dos berços pertencentes à instalação portuária para obter a taxa de
+ocupação da instalação portuária (𝑇𝑂 ).
+𝐼𝑃
+1.2.7. Tipos de Paralisação
+O indicador apresenta a soma do tempo total das paralisações, em horas, por motivo
+ou por Instalação Portuária. São consideradas todas as atracações e berços em que
+ocorreram um ou mais motivos de paralisação durante o Tempo de estadia (TE) da
+embarcação.
+Os tipos de paralisação podem ser:
+1. Chuva e/ou outras condições climáticas desfavoráveis;
+2. Fundeio sem previsão de atracação;
+3. Outros;
+4. Falta de energia elétrica;
+5. Greve ou falta de trabalhadores portuários avulsos;
+6. Quebra de equipamento do Porto, devidamente comprovada;
+7. Quebra de equipamento do Operador Portuário, devidamente comprovada;
+8. Acidente;
+9. Maré para embarcações com restrição de operação;
+10. Arqueação;
+11. Rechego;
+12. Peação da carga;
+13. Mudança de porão;
+14. Aguardando transporte rodoviário;
+15. Troca de turno;
+16. Limpeza operacional;
+17. Liberação de órgãos públicos;
+Página 12 de 13
+Documentação do Estatístico Aquaviário
+18. Manobra de embarcação;
+19. Problema operacional da embarcação;
+20. Aguardando carga;
+21. Aguardando vagões;
+22. Sem operação por conveniência do armador;
+23. Sem operação por conveniência do agente;
+24. Sem operação por conveniência do operador;
+25. Manutenção preventiva;
+26. Aguardando sequência de descarga;
+27. Preparação de equipamentos do cais;
+28. Motivo de segurança;
+29. Pernoite de navio atracado;
+30. Parada para almoço.
+Os tempos de paralisação podem ser calculados de duas formas:
+1. Para as atracações com movimentação de carga - considera somente no
+cálculo os tipos de operação de carga: Movimentação de Carga, Apoio,
+Transbordo, Longo Curso Exportação, Longo Curso Importação, Longo Curso
+Exportação com Baldeação de Carga Estrangeira, Longo Curso Importação
+com Baldeação de Carga Estrangeira, Cabotagem, Interior, Baldeação de
+Carga Nacional e Baldeação de Carga Estrangeira de Passagem; ou
+2. Para atracações com todos os tipos de operação - compreende as atracações
+de movimentação de carga acrescidas dos tipos de operação de carga:
+Abastecimento, Safamento, Remoção a bordo, Operação Intermediária e
+Transferência Interna.
+Para mais informações sobre o cálculo dos indicadores, acesse a Metodologia de
+Cálculo dos Indicadores do Estatístico Aquaviário.
+Página 13 de 13

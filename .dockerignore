@@ -1,0 +1,15 @@
+# Nada de dependências locais (Windows), build antigo ou segredo na imagem.
+**/node_modules
+**/.next
+**/out
+**/.venv
+**/__pycache__
+**/.env
+**/.env.*
+!**/.env.example
+**/*.tsbuildinfo
+painel/public/maplibre
+# data/mare/ VAI para a imagem (tábuas DHN); o banco não.
+ais-service/data/*.db*
+ais-service/data/rss.xml
+.git

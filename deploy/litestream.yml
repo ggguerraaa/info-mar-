@@ -1,0 +1,20 @@
+# Litestream 0.3: backup contínuo do SQLite num armazenamento compatível com S3
+# (Cloudflare R2 ou Backblaze B2). Os valores vêm de variáveis de ambiente do
+# Render — nada de credencial neste arquivo.
+#
+# sync-interval de 10 s: cada sincronização é uma gravação (operação "classe A"
+# no R2). 10 s dá ~260 mil por mês, dentro do gratuito (1 milhão em 02/11/2026);
+# o padrão de 1 s passaria disso. Perda máxima num desligamento brusco: ~10 s.
+dbs:
+  - path: ${DB_PATH}
+    replicas:
+      - type: s3
+        bucket: ${LITESTREAM_BUCKET}
+        path: info-mare
+        endpoint: ${LITESTREAM_ENDPOINT}
+        region: auto
+        access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
+        secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
+        sync-interval: 10s
+        snapshot-interval: 24h
+        retention: 72h

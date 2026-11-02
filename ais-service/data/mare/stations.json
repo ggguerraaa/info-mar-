@@ -1,0 +1,282 @@
+[
+  {
+    "id": "10519",
+    "name": "PORTO DE BELÉM (ESTADO DO PARÁ)",
+    "file": "10519.json"
+  },
+  {
+    "id": "10525",
+    "name": "ILHA DO MOSQUEIRO (ESTADO DO PARÁ)",
+    "file": "10525.json"
+  },
+  {
+    "id": "10566",
+    "name": "PORTO DE VILA DO CONDE (ESTADO DO PARÁ)",
+    "file": "10566.json"
+  },
+  {
+    "id": "10571",
+    "name": "ATRACADOURO DE BREVES (ESTADO DO PARÁ)",
+    "file": "10571.json"
+  },
+  {
+    "id": "10615",
+    "name": "PORTO DE SANTANA - CIA DOCAS DE SANTANA (ESTADO DO AMAPÁ)",
+    "file": "10615.json"
+  },
+  {
+    "id": "10656",
+    "name": "IGARAPÉ GRANDE DO CURUÁ",
+    "file": "10656.json"
+  },
+  {
+    "id": "10657",
+    "name": "BARRA NORTE DO RIO AMAZONAS - ARCO LAMOSO",
+    "file": "10657.json"
+  },
+  {
+    "id": "20520",
+    "name": "FUNDEADOURO DE SALINÓPOLIS (ESTADO DO PARÁ)",
+    "file": "20520.json"
+  },
+  {
+    "id": "20535",
+    "name": "ILHA DOS GUARÁS (ESTADO DO PARÁ)",
+    "file": "20535.json"
+  },
+  {
+    "id": "30110",
+    "name": "PORTO DE ITAQUI (ESTADO DO MARANHÃO)",
+    "file": "30110.json"
+  },
+  {
+    "id": "30120",
+    "name": "SÃO LUÍS (ESTADO DO MARANHÃO)",
+    "file": "30120.json"
+  },
+  {
+    "id": "30140",
+    "name": "PORTO DE TUTÓIA (ESTADO DO MARANHÃO)",
+    "file": "30140.json"
+  },
+  {
+    "id": "30149",
+    "name": "TERMINAL DA PONTA DA MADEIRA (ESTADO DO MARANHÃO)",
+    "file": "30149.json"
+  },
+  {
+    "id": "30156",
+    "name": "TERMINAL DA ALUMAR (ESTADO DO MARANHÃO)",
+    "file": "30156.json"
+  },
+  {
+    "id": "30225",
+    "name": "PORTO DE LUÍS CORREIA (ESTADO DO PIAUÍ)",
+    "file": "30225.json"
+  },
+  {
+    "id": "30337",
+    "name": "TERMINAL PORTUÁRIO DO PECÉM (ESTADO DO CEARÁ)",
+    "file": "30337.json"
+  },
+  {
+    "id": "30340",
+    "name": "PORTO DE MUCURIPE - FORTALEZA (ESTADO DO CEARÁ)",
+    "file": "30340.json"
+  },
+  {
+    "id": "30407",
+    "name": "PORTO DE AREIA BRANCA - TERMISA (ESTADO DO RIO GRANDE DO NORTE)",
+    "file": "30407.json"
+  },
+  {
+    "id": "30443",
+    "name": "PORTO DE GUAMARÉ (ESTADO DO RIO GRANDE DO NORTE)",
+    "file": "30443.json"
+  },
+  {
+    "id": "30445",
+    "name": "PORTO DE MACAU (ESTADO DO RIO GRANDE DO NORTE)",
+    "file": "30445.json"
+  },
+  {
+    "id": "30462",
+    "name": "PORTO DE NATAL - CAPITANIA DOS PORTOS DO RN (ESTADO DO RIO GRANDE DO NORTE)",
+    "file": "30462.json"
+  },
+  {
+    "id": "30540",
+    "name": "PORTO DE CABEDELO (ESTADO DA PARAÍBA)",
+    "file": "30540.json"
+  },
+  {
+    "id": "30645",
+    "name": "PORTO DO RECIFE (ESTADO DE PERNAMBUCO)",
+    "file": "30645.json"
+  },
+  {
+    "id": "30686",
+    "name": "PORTO DE SUAPE (ESTADO DE PERNAMBUCO)",
+    "file": "30686.json"
+  },
+  {
+    "id": "30725",
+    "name": "PORTO DE MACEIÓ (ESTADO DE ALAGOAS)",
+    "file": "30725.json"
+  },
+  {
+    "id": "30810",
+    "name": "TERMINAL MARÍTIMO INÁCIO BARBOSA (ESTADO DE SERGIPE)",
+    "file": "30810.json"
+  },
+  {
+    "id": "30825",
+    "name": "CAPITANIA DOS PORTOS DE SERGIPE (ESTADO DE SERGIPE)",
+    "file": "30825.json"
+  },
+  {
+    "id": "30955",
+    "name": "ARQUIPÉLAGO DE FERNANDO DE NORONHA (BAÍA DE SANTO ANTÔNIO)",
+    "file": "30955.json"
+  },
+  {
+    "id": "40118",
+    "name": "PORTO DE MADRE DE DEUS (ESTADO DA BAHIA)",
+    "file": "40118.json"
+  },
+  {
+    "id": "40135",
+    "name": "PORTO DE ARATU - BASE NAVAL (ESTADO DA BAHIA)",
+    "file": "40135.json"
+  },
+  {
+    "id": "40141",
+    "name": "PORTO DE SALVADOR (ESTADO DA BAHIA)",
+    "file": "40141.json"
+  },
+  {
+    "id": "40145",
+    "name": "PORTO DE ILHÉUS - MALHADO (ESTADO DA BAHIA)",
+    "file": "40145.json"
+  },
+  {
+    "id": "40240",
+    "name": "TERMINAL DE BARRA DO RIACHO (ESTADO DO ESPÍRITO SANTO)",
+    "file": "40240.json"
+  },
+  {
+    "id": "40255",
+    "name": "PORTO DE TUBARÃO (ESTADO DO ESPÍRITO SANTO)",
+    "file": "40255.json"
+  },
+  {
+    "id": "40256",
+    "name": "PORTO DE VITÓRIA (ESTADO DO ESPÍRITO SANTO)",
+    "file": "40256.json"
+  },
+  {
+    "id": "40263",
+    "name": "ILHA DA TRINDADE (BRASIL)",
+    "file": "40263.json"
+  },
+  {
+    "id": "40292",
+    "name": "TERMINAL DA PONTA DO UBU (ESTADO DO ESPÍRITO SANTO)",
+    "file": "40292.json"
+  },
+  {
+    "id": "50116",
+    "name": "TERMINAL MARÍTIMO DE IMBETIBA (ESTADO DO RIO DE JANEIRO)",
+    "file": "50116.json"
+  },
+  {
+    "id": "50140",
+    "name": "PORTO DO RIO DE JANEIRO - ILHA FISCAL (ESTADO DO RIO DE JANEIRO)",
+    "file": "50140.json"
+  },
+  {
+    "id": "50145",
+    "name": "PORTO DE ITAGUAÍ (ESTADO DO RIO DE JANEIRO)",
+    "file": "50145.json"
+  },
+  {
+    "id": "50156",
+    "name": "PORTO DO FORNO (ESTADO DO RIO DE JANEIRO)",
+    "file": "50156.json"
+  },
+  {
+    "id": "50165",
+    "name": "TERMINAL DA ILHA GUAIBA (ESTADO DO RIO DE JANEIRO)",
+    "file": "50165.json"
+  },
+  {
+    "id": "50169",
+    "name": "PORTO DO AÇU (ESTADO DO RIO DE JANEIRO)",
+    "file": "50169.json"
+  },
+  {
+    "id": "50170",
+    "name": "PORTO DE ANGRA DOS REIS (ESTADO DO RIO DE JANEIRO)",
+    "file": "50170.json"
+  },
+  {
+    "id": "50210",
+    "name": "PORTO DE SÃO SEBASTIÃO (ESTADO DE SÃO PAULO)",
+    "file": "50210.json"
+  },
+  {
+    "id": "50228",
+    "name": "PORTO DE SANTOS (ESTADO DE SÃO PAULO)",
+    "file": "50228.json"
+  },
+  {
+    "id": "60130",
+    "name": "BARRA DE PARANAGUÁ - CANAL SUESTE (ESTADO DO PARANÁ)",
+    "file": "60130.json"
+  },
+  {
+    "id": "60132",
+    "name": "PORTO DE PARANAGUÁ - CAIS OESTE (ESTADO DO PARANÁ)",
+    "file": "60132.json"
+  },
+  {
+    "id": "60135",
+    "name": "BARRA DE PARANAGUÁ - CANAL DA GALHETA (ESTADO DO PARANÁ)",
+    "file": "60135.json"
+  },
+  {
+    "id": "60139",
+    "name": "TERMINAL PORTUÁRIO DA PONTA DO FÉLIX (ESTADO DO PARANÁ)",
+    "file": "60139.json"
+  },
+  {
+    "id": "60225",
+    "name": "PORTO DE SÃO FRANCISCO DO SUL (ESTADO DE SANTA CATARINA)",
+    "file": "60225.json"
+  },
+  {
+    "id": "60235",
+    "name": "PORTO DE ITAJAÍ (ESTADO DE SANTA CATARINA)",
+    "file": "60235.json"
+  },
+  {
+    "id": "60245",
+    "name": "PORTO DE FLORIANÓPOLIS (ESTADO DE SANTA CATARINA)",
+    "file": "60245.json"
+  },
+  {
+    "id": "60250",
+    "name": "PORTO DE IMBITUBA (ESTADO DE SANTA CATARINA)",
+    "file": "60250.json"
+  },
+  {
+    "id": "60380",
+    "name": "PORTO DO RIO GRANDE (ESTADO DO RIO GRANDE DO SUL)",
+    "file": "60380.json"
+  },
+  {
+    "id": "60900",
+    "name": "FUNDEADOURO DA ESTAÇÃO ANTÁRTICA COMANDANTE FERRAZ",
+    "file": "60900.json"
+  }
+]

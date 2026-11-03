@@ -278,7 +278,24 @@ def _resumo_navio(p: dict, agora: datetime, **extra) -> dict:
 # ------------------------------------------------------------ montagem
 
 
-def painel_manaus(nivel_rio) -> dict:
+def _bloco_calado_manaus(calados) -> dict | None:
+    """Calados aproximados por berço, publicados pelo Porto de Manaus junto da
+    régua do rio (mudam com o nível). O maior vale como "calado máximo"."""
+    dados = _tentar(calados)
+    if not dados:
+        return None
+    maior = max(dados["bercos"], key=lambda b: b["calado_m"])
+    return {
+        "calado_maximo_m": maior["calado_m"],
+        "canal": f"Maior calado no berço {maior['berco']}. Valores aproximados, que variam com o nível do rio.",
+        "bercos": " · ".join(f"{b['berco']}: {b['calado_m']:.2f} m".replace(".", ",") for b in dados["bercos"]),
+        "fonte": dados["fonte"],
+        "verificado_em": dados["data_referencia"],
+        "confianca": "aproximado, como publicado pelo Porto de Manaus",
+    }
+
+
+def painel_manaus(nivel_rio, calados) -> dict:
     tempo = _tentar(lambda: _bloco_tempo(MANAUS["lat"], MANAUS["lon"], com_onda=False))
     rio = _tentar(nivel_rio)
     return {
@@ -291,7 +308,7 @@ def painel_manaus(nivel_rio) -> dict:
         "rio": rio,
         "tempo": tempo,
         "barra": {"disponivel": False},
-        "calado": None,
+        "calado": _bloco_calado_manaus(calados),
         "limites": [],
         "navios": bloco_navios("manaus", MANAUS["lat"], MANAUS["lon"]),
     }
@@ -334,10 +351,11 @@ def painel_porto(slug: str) -> dict | None:
     }
 
 
-def _linha_resumo(slug: str, nivel_rio) -> dict | None:
+def _linha_resumo(slug: str, nivel_rio, calados) -> dict | None:
     if slug == "manaus":
+        calado = _bloco_calado_manaus(calados)
         return {
-            **MANAUS, "modelo": "nivel_rio", "calado_maximo_m": None, "mare": None,
+            **MANAUS, "modelo": "nivel_rio", "calado_maximo_m": calado["calado_maximo_m"] if calado else None, "mare": None,
             "rio": _tentar(nivel_rio),
             "tempo": _tentar(lambda: _bloco_tempo(MANAUS["lat"], MANAUS["lon"], com_onda=False, horas=0)),
             "barra": {"disponivel": False},
@@ -366,12 +384,12 @@ def _linha_resumo(slug: str, nivel_rio) -> dict | None:
     }
 
 
-def resumo_portos(slugs: list[str], nivel_rio) -> list[dict]:
+def resumo_portos(slugs: list[str], nivel_rio, calados) -> list[dict]:
     """Uma linha por porto para a tela Resumo: maré agora, vento, onda,
     barra, índice — cada valor com a hora em que foi obtido. Os portos são
     consultados em paralelo (Open-Meteo frio leva ~1 s por porto)."""
     with ThreadPoolExecutor(max_workers=6) as executor:
-        linhas = list(executor.map(lambda s: _linha_resumo(s, nivel_rio), slugs))
+        linhas = list(executor.map(lambda s: _linha_resumo(s, nivel_rio, calados), slugs))
     return [linha for linha in linhas if linha]
 
 

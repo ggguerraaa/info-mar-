@@ -72,7 +72,7 @@ from monitoramento import checar_saude_do_sistema
 from praticagem import porto_tem_fonte_de_praticagem, porto_tem_fila_de_manobras
 from sun_times import nascer_por_do_sol
 from draft_calculator import calcular_janelas_seguras
-from nivel_rio_manaus import buscar_nivel_rio_manaus
+from nivel_rio_manaus import buscar_calados_manaus, buscar_nivel_rio_manaus
 from painel_porto import MANAUS, painel_manaus, painel_porto, resumo_portos, todos_os_slugs
 from port_operations import (
     classificar_indice_5_faixas,
@@ -406,6 +406,20 @@ def _nivel_rio_em_cache() -> dict:
     return dados
 
 
+_cache_calados: tuple[float, dict] | None = None
+
+
+def _calados_manaus_em_cache() -> dict | None:
+    """Calados dos berços de Manaus: o porto publica uma vez por dia."""
+    global _cache_calados
+    if _cache_calados and time.monotonic() - _cache_calados[0] < 1800:
+        return _cache_calados[1]
+    dados = buscar_calados_manaus()
+    if dados:
+        _cache_calados = (time.monotonic(), dados)
+    return dados
+
+
 @app.get("/api/portos/manaus/nivel-rio")
 def nivel_rio_manaus():
     """Manaus é porto fluvial (ver nivel_rio_manaus.py): nível do rio, não maré."""
@@ -417,7 +431,7 @@ def resumo(slugs: str = Query(default="", max_length=400)):
     """Tela Resumo: uma linha por porto pedido (todos, se vazio)."""
     validos = set(todos_os_slugs())
     pedidos = [s for s in slugs.split(",") if s in validos] or todos_os_slugs()
-    return resumo_portos(pedidos[:20], _nivel_rio_em_cache)
+    return resumo_portos(pedidos[:20], _nivel_rio_em_cache, _calados_manaus_em_cache)
 
 
 _cache_painel: dict[str, tuple[float, dict]] = {}
@@ -431,7 +445,7 @@ def painel_do_porto(slug: str):
     item = _cache_painel.get(slug)
     if item and time.monotonic() - item[0] < 30:
         return item[1]
-    dados = painel_manaus(_nivel_rio_em_cache) if slug == "manaus" else painel_porto(slug)
+    dados = painel_manaus(_nivel_rio_em_cache, _calados_manaus_em_cache) if slug == "manaus" else painel_porto(slug)
     if dados is None:
         raise HTTPException(status_code=404, detail=f"Porto '{slug}' não encontrado")
     dados["gerado_em"] = datetime.now(timezone.utc).isoformat()

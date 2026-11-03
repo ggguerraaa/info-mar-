@@ -230,8 +230,43 @@ def buscar_nivel_rio_manaus() -> NivelRioNegro:
     return NivelRioNegro(None, None, None, None, coletado_em=agora_iso)
 
 
+def buscar_calados_manaus() -> dict | None:
+    """Calados aproximados nos berços, como o Porto de Manaus publica junto da
+    régua (conferido em 02/11/2026: "Calados aproximados nos berços TORRES:
+    21.68/ ROADWAY: 20.78m / PLATAFORMA MALCHER: 4.84m / PAREDÃO: 0.00m",
+    referentes à leitura de 30/10/2026). Mudam com o nível do rio. Valores e
+    data saem como publicados; sem o bloco na página, devolve None."""
+    try:
+        resp = requests.get(URL_NIVEL_RIO, timeout=TIMEOUT_S, headers={"User-Agent": USER_AGENT})
+        resp.raise_for_status()
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Falha ao buscar calados no site do Porto de Manaus: %s", exc)
+        return None
+
+    texto = BeautifulSoup(resp.text, "html.parser").get_text(" ", strip=True)
+    bloco = re.search(r"Calados aproximados nos ber[çc]os\s+(.+?)(?:\s+Home\b|$)", texto)
+    if not bloco:
+        logger.warning("Bloco de calados não encontrado na página do Porto de Manaus.")
+        return None
+    bercos = [
+        {"berco": nome.strip().title(), "calado_m": _to_float_br(valor)}
+        for nome, valor in re.findall(r"([A-ZÀ-Ü][A-ZÀ-Ü ]+?):\s*([\d.,]+)\s*m?", bloco.group(1))
+    ]
+    bercos = [b for b in bercos if b["calado_m"] is not None]
+    if not bercos:
+        return None
+    data = re.search(r"N[íi]vel do Rio\s+(\d{2})/(\d{2})/(\d{4})", texto)
+    return {
+        "bercos": bercos,
+        "data_referencia": f"{data.group(3)}-{data.group(2)}-{data.group(1)}" if data else None,
+        "fonte": URL_NIVEL_RIO,
+        "coletado_em": datetime.now(timezone.utc).isoformat(),
+    }
+
+
 if __name__ == "__main__":
     import json
 
     logging.basicConfig(level=logging.INFO)
     print(json.dumps(buscar_nivel_rio_manaus().to_dict(), ensure_ascii=False, indent=2))
+    print(json.dumps(buscar_calados_manaus(), ensure_ascii=False, indent=2))

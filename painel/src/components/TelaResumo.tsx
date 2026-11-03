@@ -54,7 +54,7 @@ function Cartao({ p, onRemover }: { p: ResumoPorto; onRemover: () => void }) {
           <h2 id={`resumo-${p.slug}`} className="cartao-nome">
             <Link href={`/porto/?p=${p.slug}`}>{p.porto}</Link>
           </h2>
-          <p className="nota">{p.estado}{p.modelo === "nivel_rio" ? " · Rio Negro" : p.calado_maximo_m ? ` · calado máx. ${fmt(p.calado_maximo_m, 1, " m")}` : " · calado sem dado"}</p>
+          <p className="nota">{p.estado}{p.modelo === "nivel_rio" ? " · Rio Negro" : ""}{p.calado_maximo_m ? ` · calado máx. ${fmt(p.calado_maximo_m, 1, " m")}` : " · calado sem dado"}</p>
         </div>
         <span className={classeSituacao(p.situacao.palavra)}>{p.situacao.palavra}</span>
         <button className="icone-botao" onClick={onRemover} aria-label={`Tirar ${p.porto} do resumo`}><IconeFechar /></button>

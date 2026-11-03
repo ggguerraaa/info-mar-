@@ -181,15 +181,19 @@ export default function ConteudoPorto({ dados, onNavio }: { dados: PainelPorto; 
         </Bloco>
       )}
 
-      {dados.modelo === "mare" && (
-        <Bloco titulo="Calado e limites">
+      {(
+        <Bloco titulo={dados.modelo === "nivel_rio" ? "Calado nos berços" : "Calado e limites"}>
           {calado ? (
             <>
               <p><span className="valor">Calado máximo {fmt(calado.calado_maximo_m, 2, " m")}</span></p>
               {calado.canal && <p className="nota">{calado.canal}</p>}
+              {dados.modelo === "nivel_rio" && calado.bercos && <p className="nota">{calado.bercos}</p>}
               {calado.confianca && <p className="nota">Confiança: {calado.confianca}</p>}
               <p className="fonte">
-                Fonte: {calado.fonte?.startsWith("http") ? <a href={calado.fonte} rel="noopener noreferrer" target="_blank">página oficial</a> : calado.fonte}, verificada em {dataCurta(calado.verificado_em)}. Calado muda com dragagem.
+                Fonte: {calado.fonte?.startsWith("http") ? <a href={calado.fonte} rel="noopener noreferrer" target="_blank">{dados.modelo === "nivel_rio" ? "Porto de Manaus" : "página oficial"}</a> : calado.fonte}
+                {dados.modelo === "nivel_rio"
+                  ? `, referente à leitura de ${dataCurta(calado.verificado_em)}. Muda com o nível do rio.`
+                  : `, verificada em ${dataCurta(calado.verificado_em)}. Calado muda com dragagem.`}
               </p>
             </>
           ) : <p><span className="valor vazio">Sem dado.</span> <span className="nota">Nenhuma fonte pública de calado foi encontrada para este porto.</span></p>}
@@ -207,7 +211,9 @@ export default function ConteudoPorto({ dados, onNavio }: { dados: PainelPorto; 
               ))}
             </ul>
           )}
-          <p className="nota">Calculadora de calado desligada: falta a profundidade do canal referida ao nível de redução.</p>
+          {dados.modelo === "mare" && (
+            <p className="nota">Calculadora de calado desligada: falta a profundidade do canal referida ao nível de redução.</p>
+          )}
         </Bloco>
       )}
 

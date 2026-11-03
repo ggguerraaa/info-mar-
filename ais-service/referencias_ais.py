@@ -4,7 +4,8 @@ Tabelas de referência para traduzir códigos do AIS em texto.
 - Tipo de navio e status de navegação: Recomendação ITU-R M.1371
   (tabela "Type of ship" e campo "Navigational status" da mensagem 1/2/3).
 - Bandeira: os 3 primeiros dígitos do MMSI (MID), pela tabela oficial da
-  ITU em config/mid_itu.json (fonte e data dentro do arquivo).
+  ITU em config/mid_itu.json (fonte e data dentro do arquivo). O nome em
+  português (mids_pt) vem do Unicode CLDR, casado por tools/traduzir_mid.mjs.
 """
 
 import json
@@ -57,7 +58,8 @@ def nome_tipo(codigo: int | None) -> str | None:
 
 @lru_cache(maxsize=1)
 def _mids() -> dict[str, str]:
-    return json.loads(_MID_PATH.read_text(encoding="utf-8"))["mids"]
+    dados = json.loads(_MID_PATH.read_text(encoding="utf-8"))
+    return {**dados["mids"], **dados.get("mids_pt", {})}  # português quando houver
 
 
 def bandeira_por_mmsi(mmsi: str | None) -> str | None:

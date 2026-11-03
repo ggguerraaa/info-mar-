@@ -150,7 +150,7 @@ export default function PainelNavio({
 
               <p className="fonte">
                 Fonte: {card.fonte}, posição {p ? haQuantoTempo(p.timestamp_utc) : "sem dado"}. Destino e ETA são
-                digitados pela tripulação e podem estar desatualizados. Bandeira pela tabela MID da ITU.
+                digitados pela tripulação e podem estar desatualizados. Bandeira pela tabela MID da ITU, com o nome em português do Unicode CLDR.
               </p>
             </>
           )}

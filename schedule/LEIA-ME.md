@@ -1,5 +1,16 @@
 # Schedule
 
+Dois jeitos de usar:
+
+1. **Publicado (este arquivo):** commit de `schedule.csv` na `main`. Fica
+   público no repositório e é analisado pelo Actions a cada rodada, com o
+   histórico completo dos eventos.
+2. **No navegador:** na tela Schedule, arraste o CSV (mesmo formato). A
+   comparação roda no navegador, com os rastros publicados (7 dias para a frota
+   em destaque, 3 dias para os demais navios). O arquivo não é enviado e fica
+   salvo só naquele navegador até "Esquecer arquivo". Bom para schedule que não
+   pode ficar público.
+
 `schedule.csv` é o programado. Atualize e faça commit na `main` todo dia: o
 push dispara uma rodada do Actions e a tela **Schedule** compara com o AIS.
 

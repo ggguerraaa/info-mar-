@@ -3,11 +3,15 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AVISO_COBERTURA, AVISO_NAVEGACAO, BASE_PATH, buscarJson, MODO_ESTATICO, haQuantoTempo, type PortoMapa, type Trajetoria } from "@/lib/api";
+import {
+  AVISO_COBERTURA, AVISO_NAVEGACAO, BASE_PATH, buscarFrota, buscarJson, MODO_ESTATICO, haQuantoTempo,
+  type PortoMapa, type RespostaFrota, type Trajetoria,
+} from "@/lib/api";
 import { useNaviosSalvos } from "@/lib/naviosSalvos";
 import Busca from "./Busca";
 import MeusNavios from "./MeusNavios";
 import PainelNavio from "./PainelNavio";
+import PainelFrota from "./PainelFrota";
 import PainelPorto from "./PainelPorto";
 import { IconeSeta } from "./Icones";
 
@@ -19,6 +23,8 @@ export default function TelaMapa() {
   const parametros = useSearchParams();
   const [navio, setNavio] = useState<string | null>(parametros.get("navio"));
   const [porto, setPorto] = useState<string | null>(parametros.get("porto"));
+  const [armador, setArmador] = useState<string>(parametros.get("armador") ?? "");
+  const [frota, setFrota] = useState<RespostaFrota | null>(null);
   const [portos, setPortos] = useState<PortoMapa[]>([]);
   const [rastro, setRastro] = useState<{ mmsi: string; coords: [number, number][] } | null>(null);
   const [centralizar, setCentralizar] = useState<{ lon: number; lat: number; zoom?: number; id: number } | null>(null);
@@ -40,9 +46,18 @@ export default function TelaMapa() {
     const q = new URLSearchParams();
     if (navio) q.set("navio", navio);
     if (porto) q.set("porto", porto);
+    if (armador) q.set("armador", armador);
     const destino = q.toString() ? `/?${q}` : "/";
     if (`${BASE_PATH}${destino}` !== `${window.location.pathname}${window.location.search}`) router.replace(destino, { scroll: false });
-  }, [navio, porto, router]);
+  }, [navio, porto, armador, router]);
+
+  // Frota em destaque (a cada 2 min; o arquivo muda a cada ~30 min)
+  useEffect(() => {
+    const carregar = () => buscarFrota().then(setFrota).catch(() => {});
+    carregar();
+    const intervalo = setInterval(carregar, 120_000);
+    return () => clearInterval(intervalo);
+  }, []);
 
   // Rastro de 24 h do navio selecionado
   useEffect(() => {
@@ -83,7 +98,7 @@ export default function TelaMapa() {
   }, []);
 
   const rastroAtual = rastro && rastro.mmsi === navio ? rastro.coords : null;
-  const temPainel = Boolean(navio || porto) || salvos.length > 0;
+  const temPainel = Boolean(navio || porto || armador) || salvos.length > 0;
 
   return (
     <div className="tela-mapa">
@@ -99,6 +114,9 @@ export default function TelaMapa() {
         onPorto={escolherPorto}
         onPortos={setPortos}
         onAtualizado={aoAtualizar}
+        frota={frota?.navios ?? []}
+        armadores={frota?.armadores ?? []}
+        armador={armador}
       />
 
       <div className="mapa-topo">
@@ -112,6 +130,17 @@ export default function TelaMapa() {
             </button>
           ))}
         </div>
+        {frota && frota.armadores.length > 0 && (
+          <>
+            <label htmlFor="filtro-armador" className="sr-only">Mostrar navios de</label>
+            <select id="filtro-armador" className="seletor seletor-armador flutua-leve" value={armador}
+              onChange={(e) => { setArmador(e.target.value); setFolhaAberta(true); }}>
+              <option value="">Todos os navios</option>
+              <option value="frota">Só a frota em destaque</option>
+              {frota.armadores.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
+            </select>
+          </>
+        )}
       </div>
 
       {erro && <p className="mapa-erro painel flutua" role="alert">{erro}</p>}
@@ -132,6 +161,16 @@ export default function TelaMapa() {
               onCentralizar={(lon, lat) => irPara(lon, lat, 10)}
             />
           )}
+          {armador && frota && (
+            <PainelFrota
+              frota={frota}
+              armador={armador}
+              portos={portos}
+              selecionado={navio}
+              onEscolher={(m, lon, lat) => escolherNavio(m, lon, lat)}
+              onFechar={() => setArmador("")}
+            />
+          )}
           {porto && <PainelPorto key={porto} slug={porto} onFechar={() => setPorto(null)} onNavio={(m) => escolherNavioDaBusca(m)} />}
           <MeusNavios selecionado={navio} onEscolher={escolherNavio} />
         </div>
@@ -141,7 +180,10 @@ export default function TelaMapa() {
         <div className="legenda painel" aria-label="Legenda">
           <span><i className="leg leg-sel" aria-hidden="true" />Selecionado</span>
           <span><i className="leg leg-salvo" aria-hidden="true" />Meus navios</span>
-          <span><i className="leg leg-outro" aria-hidden="true" />Outros</span>
+          {frota?.armadores.filter((a) => !armador || armador === "frota" || a.id === armador).map((a) => (
+            <span key={a.id}><i className="leg" style={{ background: a.cor }} aria-hidden="true" />{a.nome.split(" ")[0]}</span>
+          ))}
+          {!armador && <span><i className="leg leg-outro" aria-hidden="true" />Outros</span>}
           <span><i className="leg leg-parado" aria-hidden="true" />Parado</span>
         </div>
         <p className="cobertura painel">

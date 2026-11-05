@@ -4,7 +4,10 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import * as maplibregl from "maplibre-gl";
 import type { GeoJSONSource, Map as MapaGL, MapLayerMouseEvent } from "maplibre-gl";
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { BASE_PATH, buscarJson, ErroApi, ESTILO_MAPA_URL, MODO_ESTATICO, type PortoMapa, type RespostaNavios } from "@/lib/api";
+import {
+  BASE_PATH, buscarJson, ErroApi, ESTILO_MAPA_URL, MODO_ESTATICO,
+  type Armador, type NavioFrota, type PortoMapa, type RespostaNavios,
+} from "@/lib/api";
 import { iconeNavio, iconePonto, iconePorto, ESCALA_ICONES } from "./icones";
 
 // Mapa em WebGL (MapLibre): os navios são uma camada de símbolos, não
@@ -18,6 +21,7 @@ const COR = {
 // Estático: os arquivos mudam a cada ~30 min; 1 min basta para pegar a rodada nova.
 const ATUALIZAR_A_CADA_MS = MODO_ESTATICO ? 60_000 : 12_000;
 const VELHO_S = 30 * 60;
+const FROTA_VELHO_S = 6 * 3600; // frota: posição mais velha que isso aparece apagada
 const CENTRO_BRASIL: [number, number] = [-45, -16];
 
 // Camadas do Positron que só fazem ruído num mapa de navegação.
@@ -37,6 +41,11 @@ export interface MapaProps {
   onPorto: (slug: string) => void;
   onPortos: (portos: PortoMapa[]) => void;
   onAtualizado: (info: { naVisao: number; total: number; em: string } | null, erro: string | null) => void;
+  /** Frota em destaque (última posição em até 7 dias) e cor de cada armador. */
+  frota: NavioFrota[];
+  armadores: Armador[];
+  /** "" = todos os navios; "frota" = só a frota; id = só aquele armador. */
+  armador: string;
 }
 
 function clarearEstilo(mapa: MapaGL) {
@@ -72,12 +81,22 @@ function adicionarIcones(mapa: MapaGL) {
   mapa.addImage("porto-sel", iconePorto(COR.corrente, true), opcoes);
 }
 
+function adicionarIconesFrota(mapa: MapaGL, armadores: Armador[]) {
+  const opcoes = { pixelRatio: ESCALA_ICONES };
+  for (const a of armadores) {
+    if (mapa.hasImage(`frota-${a.id}`)) continue;
+    mapa.addImage(`frota-${a.id}`, iconeNavio(a.cor, "#ffffff", 22), opcoes);
+    mapa.addImage(`frota-${a.id}-p`, iconePonto(a.cor, "#ffffff", 13), opcoes);
+  }
+}
+
 const VAZIO: GeoJSON.FeatureCollection = { type: "FeatureCollection", features: [] };
 
 function adicionarCamadas(mapa: MapaGL) {
   mapa.addSource("navios", { type: "geojson", data: VAZIO });
   mapa.addSource("portos", { type: "geojson", data: VAZIO });
   mapa.addSource("rastro", { type: "geojson", data: VAZIO });
+  mapa.addSource("frota", { type: "geojson", data: VAZIO });
 
   mapa.addLayer({
     id: "rastro", type: "line", source: "rastro",
@@ -125,6 +144,33 @@ function adicionarCamadas(mapa: MapaGL) {
       "text-allow-overlap": true,
     },
     paint: { "text-color": COR.profundo, "text-halo-color": "#ffffff", "text-halo-width": 1.5 },
+  });
+
+  // Frota em destaque: ícone maior na cor do armador e nome visível.
+  mapa.addLayer({
+    id: "frota", type: "symbol", source: "frota",
+    layout: {
+      "icon-image": ["case", ["get", "s"],
+        ["case", ["get", "p"], "ponto-sel", "navio-sel"],
+        ["concat", "frota-", ["get", "a"], ["case", ["get", "p"], "-p", ""]]],
+      "icon-size": ["interpolate", ["linear"], ["zoom"], 3, 0.8, 8, 1.05],
+      "icon-rotate": rotacao as unknown as number,
+      "icon-rotation-alignment": "map",
+      "icon-allow-overlap": true,
+      "icon-ignore-placement": true,
+      "symbol-sort-key": ["case", ["get", "s"], 3, 2],
+      "text-field": ["step", ["zoom"], ["case", ["get", "s"], ["get", "n"], ""], 5, ["get", "n"]],
+      "text-font": ["Noto Sans Bold"],
+      "text-size": 11,
+      "text-offset": [0, 1.3],
+      "text-anchor": "top",
+      "text-optional": true,
+    },
+    paint: {
+      "icon-opacity": ["case", ["get", "v"], 0.5, 1],
+      "text-color": COR.profundo, "text-halo-color": "#ffffff", "text-halo-width": 1.5,
+      "text-opacity": ["case", ["get", "v"], 0.6, 1],
+    },
   });
 
   mapa.addLayer({
@@ -176,17 +222,47 @@ export default function Mapa(props: MapaProps) {
     (mapa.getSource("navios") as GeoJSONSource).setData({ type: "FeatureCollection", features });
   }
 
+  // Frota: um ponto por navio com posição (até 7 dias), na cor do armador.
+  function redesenharFrota() {
+    const mapa = mapaRef.current;
+    if (!mapa || !pronto.current) return;
+    const { frota, armadores, navioSelecionado } = propsRef.current;
+    adicionarIconesFrota(mapa, armadores);
+    const features: GeoJSON.Feature[] = frota
+      .filter((n) => n.posicao && n.mmsi)
+      .map((n) => ({
+        type: "Feature",
+        geometry: { type: "Point", coordinates: [n.posicao!.lon, n.posicao!.lat] },
+        properties: {
+          m: n.mmsi, n: n.nome, a: n.armador,
+          r: n.posicao!.proa ?? n.posicao!.cog ?? 0,
+          p: n.posicao!.sog == null ? n.posicao!.status === 1 || n.posicao!.status === 5 : n.posicao!.sog < 0.5,
+          v: (n.idade_s ?? 0) > FROTA_VELHO_S,
+          s: n.mmsi === navioSelecionado,
+        },
+      }));
+    (mapa.getSource("frota") as GeoJSONSource).setData({ type: "FeatureCollection", features });
+  }
+
   function aplicarFiltros() {
     const mapa = mapaRef.current;
     if (!mapa || !pronto.current) return;
-    const { navioSelecionado, salvos, mostrarNavios, mostrarPortos } = propsRef.current;
+    const { navioSelecionado, salvos, mostrarNavios, mostrarPortos, frota, armador } = propsRef.current;
+    const daFrota = frota.map((n) => n.mmsi).filter(Boolean) as string[];
     const destaque = navioSelecionado ? [...salvos, navioSelecionado] : salvos;
-    mapa.setFilter("navios", ["!", ["in", ["get", "m"], ["literal", destaque]]]);
-    mapa.setFilter("navios-destaque", ["in", ["get", "m"], ["literal", destaque]]);
-    mapa.setFilter("navio-rotulo", ["==", ["get", "m"], navioSelecionado ?? ""]);
-    for (const id of ["navios", "navios-destaque", "navio-rotulo", "rastro"]) {
-      mapa.setLayoutProperty(id, "visibility", mostrarNavios ? "visible" : "none");
+    // navio da frota é desenhado só pela camada "frota" (sem duplicar)
+    mapa.setFilter("navios", ["!", ["in", ["get", "m"], ["literal", [...destaque, ...daFrota]]]]);
+    mapa.setFilter("navios-destaque", ["all",
+      ["in", ["get", "m"], ["literal", destaque]], ["!", ["in", ["get", "m"], ["literal", daFrota]]]]);
+    mapa.setFilter("navio-rotulo", ["all",
+      ["==", ["get", "m"], navioSelecionado ?? ""], ["!", ["in", ["get", "m"], ["literal", daFrota]]]]);
+    mapa.setFilter("frota", armador && armador !== "frota" ? ["==", ["get", "a"], armador] : null);
+    // filtro por armador (ou "só frota"): os demais navios somem
+    const outros = mostrarNavios && !armador;
+    for (const id of ["navios", "navios-destaque", "navio-rotulo"]) {
+      mapa.setLayoutProperty(id, "visibility", outros ? "visible" : "none");
     }
+    for (const id of ["frota", "rastro"]) mapa.setLayoutProperty(id, "visibility", mostrarNavios ? "visible" : "none");
     mapa.setLayoutProperty("portos", "visibility", mostrarPortos ? "visible" : "none");
   }
 
@@ -271,6 +347,7 @@ export default function Mapa(props: MapaProps) {
       adicionarIcones(mapa);
       adicionarCamadas(mapa);
       pronto.current = true;
+      redesenharFrota();
       aplicarFiltros();
       agendar(0);
       try {
@@ -287,8 +364,9 @@ export default function Mapa(props: MapaProps) {
 
     mapa.on("click", "navios", (e: MapLayerMouseEvent) => { const m = e.features?.[0]?.properties?.m; if (m) propsRef.current.onNavio(String(m)); });
     mapa.on("click", "navios-destaque", (e: MapLayerMouseEvent) => { const m = e.features?.[0]?.properties?.m; if (m) propsRef.current.onNavio(String(m)); });
+    mapa.on("click", "frota", (e: MapLayerMouseEvent) => { const m = e.features?.[0]?.properties?.m; if (m) propsRef.current.onNavio(String(m)); });
     mapa.on("click", "portos", (e: MapLayerMouseEvent) => { const s = e.features?.[0]?.properties?.slug; if (s) propsRef.current.onPorto(String(s)); });
-    for (const id of ["navios", "navios-destaque", "portos"]) {
+    for (const id of ["navios", "navios-destaque", "frota", "portos"]) {
       mapa.on("mouseenter", id, () => { mapa.getCanvas().style.cursor = "pointer"; });
       mapa.on("mouseleave", id, () => { mapa.getCanvas().style.cursor = ""; });
     }
@@ -305,8 +383,9 @@ export default function Mapa(props: MapaProps) {
 
   useEffect(() => {
     redesenharNavios();
+    redesenharFrota();
     aplicarFiltros();
-  }, [props.navioSelecionado, props.salvos, props.mostrarNavios, props.mostrarPortos]);
+  }, [props.navioSelecionado, props.salvos, props.mostrarNavios, props.mostrarPortos, props.frota, props.armadores, props.armador]);
 
   useEffect(() => {
     redesenharPortos();

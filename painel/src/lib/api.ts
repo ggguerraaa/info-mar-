@@ -106,6 +106,15 @@ async function todosNavios(sinal?: AbortSignal) {
   return dados;
 }
 
+/** IMO -> MMSI de todos os navios conhecidos (para o schedule no navegador). */
+export async function mapaImoMmsi(sinal?: AbortSignal): Promise<Map<string, string>> {
+  const mapa = new Map<string, string>();
+  if (MODO_ESTATICO) {
+    for (const n of await todosNavios(sinal)) if (n.imo) mapa.set(String(n.imo), String(n.mmsi));
+  }
+  return mapa;
+}
+
 async function rotaEstatica(caminho: string, sinal?: AbortSignal): Promise<unknown> {
   const url = new URL(caminho, "http://x");
   const p = url.pathname.replace(/\/$/, "");
@@ -123,6 +132,8 @@ async function rotaEstatica(caminho: string, sinal?: AbortSignal): Promise<unkno
   }
   if (p === "/api/portos") return arquivo("portos.json", sinal);
   if (p === "/api/schedule") return arquivo("schedule.json", sinal);
+  if (p === "/api/frota") return arquivo("frota.json", sinal);
+  if (p === "/api/rastros") return arquivo("rastros.json", sinal);
   if (p === "/api/portos/resumo") {
     const linhas = await arquivo<ResumoPorto[]>("portos/resumo.json", sinal);
     const pedidos = (q.get("slugs") ?? "").split(",").filter(Boolean);
@@ -178,10 +189,12 @@ async function rotaEstatica(caminho: string, sinal?: AbortSignal): Promise<unkno
       // sem posição na retenção: monta o card com o que se sabe do navio
       const n = (await todosNavios(sinal)).find((x) => x.mmsi === m![1]);
       if (!n) throw new ErroApi(404, "Navio ainda não visto pelo AIS.");
+      const f = (await buscarFrota().catch(() => null))?.navios.find((x) => x.mmsi === m![1]);
       return {
         mmsi: n.mmsi, nome: n.nome, imo: n.imo, indicativo: null, tipo: n.tipo, comprimento_m: null, boca_m: null,
         calado_max_m: null, bandeira: n.bandeira, destino_informado: n.destino_informado, eta_informada: null,
         armador: { nome: null, fonte: null, em: null }, dados_estaticos_em: null, posicao: null,
+        ...(f ? { nome: n.nome ?? f.nome, imo: n.imo ?? f.imo } : {}),
         fonte: "AISstream.io (antenas terrestres)",
       };
     }
@@ -409,6 +422,55 @@ export function classeSituacao(palavra: string): string {
   return "selo";
 }
 
+// ------------------------------------------------------------- frota
+
+export interface Armador {
+  id: string;
+  nome: string;
+  cor: string;
+}
+
+export interface NavioFrota {
+  imo: string;
+  nome: string;
+  armador: string;
+  mmsi: string | null;
+  posicao: {
+    lat: number; lon: number; sog: number | null; cog: number | null; proa: number | null;
+    status: number | null; hora: string; nome_ais: string | null;
+  } | null;
+  idade_s: number | null;
+  destino_informado: string | null;
+  eta_informada: string | null;
+}
+
+export interface RespostaFrota {
+  gerado_em: string;
+  fonte: string | null;
+  armadores: Armador[];
+  retencao_dias: number;
+  navios: NavioFrota[];
+}
+
+/** Rastros compactos: [minuto UTC, lat×1e4, lon×1e4, velocidade×10, status]. */
+export interface RespostaRastros {
+  gerado_em: string;
+  dias_frota: number;
+  dias_outros: number;
+  navios: Record<string, [number, number, number, number | null, number | null][]>;
+}
+
+let cacheFrota: { em: number; dados: Promise<RespostaFrota> } | null = null;
+/** Frota com cache de 1 min (mapa, painel e schedule pedem a mesma coisa). */
+export function buscarFrota(): Promise<RespostaFrota> {
+  if (!cacheFrota || Date.now() - cacheFrota.em > 60_000) {
+    const dados = buscarJson<RespostaFrota>("/api/frota");
+    cacheFrota = { em: Date.now(), dados };
+    dados.catch(() => { cacheFrota = null; });
+  }
+  return cacheFrota.dados;
+}
+
 // ------------------------------------------------------------- schedule
 
 export type SituacaoEscala =
@@ -429,6 +491,7 @@ export interface Escala {
 
 export interface NavioSchedule {
   navio: string;
+  armador?: string | null;
   imo: string;
   mmsi: string;
   posicao: { lat: number; lon: number; sog: number | null; hora: string } | null;
@@ -436,11 +499,34 @@ export interface NavioSchedule {
   escalas: Escala[];
 }
 
+export interface PortoSchedule {
+  nome: string;
+  lat: number;
+  lon: number;
+  apelidos?: string[];
+  fator_rota?: number;
+  raio_fundeio_nm?: number;
+  raio_berco_nm?: number;
+}
+
+export interface RegrasSchedule {
+  tolerancia_h: number;
+  sinal_valido_h: number;
+  omissao_h: number;
+  raio_fundeio_nm: number;
+  raio_berco_nm: number;
+  sog_parado: number;
+  sog_saida: number;
+  velocidade_padrao_nos: number;
+  fator_rota: number;
+}
+
 export interface RespostaSchedule {
   gerado_em: string;
   tolerancia_h: number;
   avisos: string[];
-  portos: Record<string, { nome: string; lat: number; lon: number }>;
+  portos: Record<string, PortoSchedule>;
+  regras?: RegrasSchedule;
   navios: NavioSchedule[];
 }
 

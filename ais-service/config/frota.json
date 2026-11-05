@@ -1,0 +1,196 @@
+{
+  "_leia": "Frota em destaque no mapa e no filtro por armador. Armador entra no card do navio com esta fonte (nunca é deduzido do nome). mmsi é opcional: vazio = descoberto pelo IMO no AIS (ShipStaticData). Inclui próprios e afretados.",
+  "fonte": "Lista consolidada pelo dono do projeto (ABAC, cadastro de embarcações; frota oficial da Aliança), 04/11/2026",
+  "armadores": [
+    {
+      "id": "login",
+      "nome": "Log-In Logística",
+      "cor": "#023653"
+    },
+    {
+      "id": "alianca",
+      "nome": "Aliança Navegação e Logística",
+      "cor": "#0A7E8C"
+    },
+    {
+      "id": "mercosul",
+      "nome": "Mercosul Line",
+      "cor": "#8A6A1F"
+    },
+    {
+      "id": "norcoast",
+      "nome": "Norcoast",
+      "cor": "#6B4A86"
+    }
+  ],
+  "navios": [
+    {
+      "imo": "9471886",
+      "nome": "Log-In Jacarandá",
+      "armador": "login",
+      "mmsi": ""
+    },
+    {
+      "imo": "9471898",
+      "nome": "Log-In Jatobá",
+      "armador": "login",
+      "mmsi": ""
+    },
+    {
+      "imo": "9351799",
+      "nome": "Log-In Pantanal",
+      "armador": "login",
+      "mmsi": ""
+    },
+    {
+      "imo": "9506394",
+      "nome": "Log-In Discovery",
+      "armador": "login",
+      "mmsi": ""
+    },
+    {
+      "imo": "9571296",
+      "nome": "Log-In Endurance",
+      "armador": "login",
+      "mmsi": ""
+    },
+    {
+      "imo": "9961960",
+      "nome": "Log-In Evolution",
+      "armador": "login",
+      "mmsi": ""
+    },
+    {
+      "imo": "9961972",
+      "nome": "Log-In Experience",
+      "armador": "login",
+      "mmsi": ""
+    },
+    {
+      "imo": "9852365",
+      "nome": "Log-In Polaris",
+      "armador": "login",
+      "mmsi": ""
+    },
+    {
+      "imo": "9327669",
+      "nome": "Log-In Resiliente",
+      "armador": "login",
+      "mmsi": ""
+    },
+    {
+      "imo": "9292137",
+      "nome": "Aliança Leblon",
+      "armador": "alianca",
+      "mmsi": ""
+    },
+    {
+      "imo": "9603221",
+      "nome": "Fernão de Magalhães",
+      "armador": "alianca",
+      "mmsi": ""
+    },
+    {
+      "imo": "9603219",
+      "nome": "Pedro Álvares Cabral",
+      "armador": "alianca",
+      "mmsi": ""
+    },
+    {
+      "imo": "9602875",
+      "nome": "Sebastião Caboto",
+      "armador": "alianca",
+      "mmsi": ""
+    },
+    {
+      "imo": "9603233",
+      "nome": "Américo Vespúcio",
+      "armador": "alianca",
+      "mmsi": ""
+    },
+    {
+      "imo": "9625396",
+      "nome": "Vicente Pinzón",
+      "armador": "alianca",
+      "mmsi": ""
+    },
+    {
+      "imo": "9625384",
+      "nome": "Bartolomeu Dias",
+      "armador": "alianca",
+      "mmsi": ""
+    },
+    {
+      "imo": "9694581",
+      "nome": "Maersk Ganges",
+      "armador": "alianca",
+      "mmsi": ""
+    },
+    {
+      "imo": "9356153",
+      "nome": "Mercosul Santos",
+      "armador": "mercosul",
+      "mmsi": ""
+    },
+    {
+      "imo": "9697002",
+      "nome": "Mercosul Itajaí",
+      "armador": "mercosul",
+      "mmsi": ""
+    },
+    {
+      "imo": "9356141",
+      "nome": "Mercosul Suape",
+      "armador": "mercosul",
+      "mmsi": ""
+    },
+    {
+      "imo": "9784661",
+      "nome": "Mercosul Fortaleza",
+      "armador": "mercosul",
+      "mmsi": ""
+    },
+    {
+      "imo": "9539494",
+      "nome": "Mercosul Guarujá",
+      "armador": "mercosul",
+      "mmsi": ""
+    },
+    {
+      "imo": "9418377",
+      "nome": "CMA CGM Vera Cruz",
+      "armador": "mercosul",
+      "mmsi": ""
+    },
+    {
+      "imo": "9649835",
+      "nome": "CMA CGM Santos",
+      "armador": "mercosul",
+      "mmsi": ""
+    },
+    {
+      "imo": "9612777",
+      "nome": "NC Bruma",
+      "armador": "norcoast",
+      "mmsi": ""
+    },
+    {
+      "imo": "9612789",
+      "nome": "NC Brisa",
+      "armador": "norcoast",
+      "mmsi": ""
+    },
+    {
+      "imo": "9612765",
+      "nome": "NC Breda",
+      "armador": "norcoast",
+      "mmsi": ""
+    },
+    {
+      "imo": "9612791",
+      "nome": "NC Bravo",
+      "armador": "norcoast",
+      "mmsi": ""
+    }
+  ]
+}

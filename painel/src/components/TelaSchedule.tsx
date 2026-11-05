@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
-  AVISO_NAVEGACAO, buscarJson, haQuantoTempo,
-  type Escala, type NavioSchedule, type RespostaSchedule, type SituacaoEscala,
+  AVISO_NAVEGACAO, buscarFrota, buscarJson, haQuantoTempo, mapaImoMmsi,
+  type Escala, type NavioSchedule, type RespostaFrota, type RespostaRastros, type RespostaSchedule, type SituacaoEscala,
 } from "@/lib/api";
+import { analisarScheduleLocal } from "@/lib/scheduleLocal";
 import { IconeBusca } from "./Icones";
 
 // Schedule programado (commit diário de schedule/schedule.csv) x real (AIS).
@@ -86,26 +87,100 @@ function situacaoAtual(n: NavioSchedule): SituacaoEscala {
   return e?.situacao ?? "sem_dado";
 }
 
+const CHAVE_ARQUIVO = "info-mare:schedule-csv";
+
+function lerArquivoSalvo(): { nome: string; texto: string } | null {
+  try {
+    const bruto = localStorage.getItem(CHAVE_ARQUIVO);
+    return bruto ? JSON.parse(bruto) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function TelaSchedule() {
-  const [dados, setDados] = useState<RespostaSchedule | null>(null);
+  const [publicado, setPublicado] = useState<RespostaSchedule | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [filtro, setFiltro] = useState("");
   const [porto, setPorto] = useState("");
   const [situacao, setSituacao] = useState<SituacaoEscala | "">("");
+  const [armador, setArmador] = useState("");
+  const [frota, setFrota] = useState<RespostaFrota | null>(null);
+  // CSV que a pessoa arrastou: fica só neste navegador
+  const [arquivo, setArquivo] = useState<{ nome: string; texto: string } | null>(null);
+  const [fonte, setFonte] = useState<"publicado" | "arquivo">("publicado");
+  const [analise, setAnalise] = useState<{ de: { nome: string; texto: string }; dados: RespostaSchedule } | null>(null);
+  const [arrastando, setArrastando] = useState(false);
+
+  // localStorage só existe no navegador (a página é gerada estática)
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      const salvo = lerArquivoSalvo();
+      if (salvo) { setArquivo(salvo); setFonte("arquivo"); }
+    });
+  }, []);
 
   useEffect(() => {
     const controle = new AbortController();
-    const carregar = () =>
+    const carregar = () => {
       buscarJson<RespostaSchedule>("/api/schedule", controle.signal)
-        .then((d) => { setDados(d); setErro(null); })
+        .then((d) => { setPublicado(d); setErro(null); })
         .catch((e) => {
           if (e.name === "AbortError") return;
-          setErro(e.status === 404 ? "O schedule ainda não foi gerado. Faça o commit de schedule/schedule.csv." : e.message);
+          setErro(e.status === 404 ? "O schedule publicado ainda não foi gerado." : e.message);
         });
+      buscarFrota().then(setFrota).catch(() => {});
+    };
     carregar();
     const intervalo = setInterval(carregar, 120_000);
     return () => { controle.abort(); clearInterval(intervalo); };
   }, []);
+
+  // Análise do CSV no navegador, com os rastros publicados
+  useEffect(() => {
+    if (!arquivo || !publicado) return;
+    let vivo = true;
+    (async () => {
+      try {
+        const [rastros, imoParaMmsi, fr] = await Promise.all([
+          buscarJson<RespostaRastros>("/api/rastros"), mapaImoMmsi(), buscarFrota().catch(() => null),
+        ]);
+        const armadorPorImo = new Map<string, string>();
+        for (const n of fr?.navios ?? []) {
+          armadorPorImo.set(n.imo, n.armador);
+          if (n.mmsi && !imoParaMmsi.has(n.imo)) imoParaMmsi.set(n.imo, n.mmsi);
+        }
+        const r = analisarScheduleLocal({
+          csv: arquivo.texto, portos: publicado.portos, regras: publicado.regras, rastros, imoParaMmsi, armadorPorImo,
+        });
+        if (vivo) setAnalise({ de: arquivo, dados: r });
+      } catch (e) {
+        if (vivo) setErro(`Não deu para analisar o arquivo: ${(e as Error).message}`);
+      }
+    })();
+    return () => { vivo = false; };
+  }, [arquivo, publicado]);
+
+  async function receberArquivo(f: File | undefined) {
+    if (!f) return;
+    if (f.size > 2_000_000) { setErro("Arquivo grande demais (máx. 2 MB). Exporte só as colunas do schedule em CSV."); return; }
+    const texto = await f.text();
+    const novo = { nome: f.name, texto };
+    setArquivo(novo);
+    setFonte("arquivo");
+    setErro(null);
+    try { localStorage.setItem(CHAVE_ARQUIVO, JSON.stringify(novo)); } catch { /* sem armazenamento: vale só nesta aba */ }
+  }
+
+  function esquecerArquivo() {
+    setArquivo(null);
+    setAnalise(null);
+    setFonte("publicado");
+    try { localStorage.removeItem(CHAVE_ARQUIVO); } catch { /* nada */ }
+  }
+
+  const local = analise && analise.de === arquivo ? analise.dados : null;
+  const dados = fonte === "arquivo" ? local : publicado;
 
   const contagem = useMemo(() => {
     const c: Partial<Record<SituacaoEscala, number>> = {};
@@ -122,6 +197,7 @@ export default function TelaSchedule() {
   const termo = filtro.trim().toUpperCase();
   const visiveis = (dados?.navios ?? []).filter((n) =>
     (!termo || `${n.navio} ${n.imo} ${n.mmsi}`.toUpperCase().includes(termo)) &&
+    (!armador || (armador === "frota" ? Boolean(n.armador) : n.armador === armador)) &&
     (!porto || n.escalas.some((e) => e.porto === porto)) &&
     (!situacao || n.escalas.some((e) => e.situacao === situacao)),
   );
@@ -137,11 +213,39 @@ export default function TelaSchedule() {
           </p>
         </div>
         <p className="nota subtitulo">
-          Programado (o schedule publicado) comparado com o que o AIS mostra. Real = evento visto no rastro do navio;
+          Programado (o schedule publicado no projeto ou o arquivo que você arrastar) comparado com o que o AIS mostra. Real = evento visto no rastro do navio;
           estimado = conta explicada em cada linha. No prazo até ±{tolerancia} h.
         </p>
 
+        <div className={arrastando ? "painel carregar-csv arrastando" : "painel carregar-csv"}
+          onDragOver={(e) => { e.preventDefault(); setArrastando(true); }}
+          onDragLeave={() => setArrastando(false)}
+          onDrop={(e) => { e.preventDefault(); setArrastando(false); receberArquivo(e.dataTransfer.files[0]); }}>
+          <div className="fontes-schedule" role="group" aria-label="Qual schedule mostrar">
+            <button className={fonte === "publicado" ? "chip ligado" : "chip"} aria-pressed={fonte === "publicado"}
+              onClick={() => setFonte("publicado")}>Schedule publicado</button>
+            <button className={fonte === "arquivo" ? "chip ligado" : "chip"} aria-pressed={fonte === "arquivo"}
+              disabled={!arquivo} onClick={() => setFonte("arquivo")}>
+              {arquivo ? `Meu arquivo: ${arquivo.nome}` : "Meu arquivo"}
+            </button>
+          </div>
+          <p className="nota">
+            Arraste aqui o CSV do seu schedule, de qualquer armador, ou{" "}
+            <label className="link-acao escolher-arquivo">
+              escolha o arquivo
+              <input type="file" accept=".csv,text/csv" className="sr-only" onChange={(e) => receberArquivo(e.target.files?.[0])} />
+            </label>
+            . A comparação é feita no seu navegador, e o arquivo não é enviado para lugar nenhum.
+            {arquivo && <> <button className="link-acao botao-link" onClick={esquecerArquivo}>Esquecer arquivo</button></>}
+          </p>
+          <p className="fonte">
+            Colunas: navio;imo;mmsi;viagem;porto;eta;etb;ets;omitido, com datas dd/mm/aaaa hh:mm em horário de Brasília.
+            O rastro publicado cobre 7 dias para a frota em destaque e 3 dias para os demais navios.
+          </p>
+        </div>
+
         {erro && <p className="painel aviso-erro" role="alert">{erro}</p>}
+        {fonte === "arquivo" && arquivo && !local && !erro && <p className="nota" role="status">Analisando o arquivo…</p>}
         {dados?.avisos.map((a) => <p key={a} className="painel aviso-erro">{a}</p>)}
 
         {dados && (
@@ -169,6 +273,16 @@ export default function TelaSchedule() {
                 <option value="">Todos os portos</option>
                 {portosUsados.map(([slug, nome]) => <option key={slug} value={slug}>{nome}</option>)}
               </select>
+              {frota && frota.armadores.length > 0 && (
+                <>
+                  <label className="sr-only" htmlFor="filtro-armador-schedule">Armador</label>
+                  <select id="filtro-armador-schedule" className="seletor" value={armador} onChange={(e) => setArmador(e.target.value)}>
+                    <option value="">Todos os armadores</option>
+                    <option value="frota">Só a frota em destaque</option>
+                    {frota.armadores.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
+                  </select>
+                </>
+              )}
             </div>
 
             <div className="lista-schedule">
@@ -176,7 +290,13 @@ export default function TelaSchedule() {
                 <section key={n.navio} className="painel navio-schedule" aria-labelledby={`n-${n.navio}`}>
                   <div className="navio-schedule-cabeca">
                     <div>
-                      <h2 id={`n-${n.navio}`}>{n.navio}</h2>
+                      <h2 id={`n-${n.navio}`}>
+                        {n.armador && frota && (
+                          <i className="cor-armador titulo-cor" aria-hidden="true"
+                            style={{ background: frota.armadores.find((a) => a.id === n.armador)?.cor }} />
+                        )}
+                        {n.navio}
+                      </h2>
                       <p className="nota">
                         {n.imo ? `IMO ${n.imo} · ` : ""}
                         {n.escalas[0]?.viagem ? `Viagem ${n.escalas[0].viagem} · ` : ""}

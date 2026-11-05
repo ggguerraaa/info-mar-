@@ -724,6 +724,22 @@ def schedule_programado_x_real():
     return gerar_status()
 
 
+@app.get("/api/frota")
+def frota_destaque():
+    """Frota de config/frota.json com MMSI, armador e última posição (7 dias)."""
+    import frota
+    cfg = frota.carregar()
+    return frota.exportar_frota(cfg, frota.aplicar_armadores(cfg))
+
+
+@app.get("/api/rastros")
+def rastros_compactos():
+    """Rastros compactos (frota 7 dias, demais 3) para o schedule no navegador."""
+    import frota
+    cfg = frota.carregar()
+    return frota.exportar_rastros({n["mmsi"] for n in frota.aplicar_armadores(cfg).values() if n["mmsi"]})
+
+
 @app.get("/api/navios/{mmsi}/trajetoria")
 def trajetoria_navio(mmsi: str, horas: int = Query(default=24, ge=1, le=168)):
     """Rastro do navio (últimas N horas, no máximo 1 ponto por minuto) para

@@ -29,6 +29,7 @@ from datetime import datetime, timezone
 
 import ais_stream
 import backend_app as api
+import sea_conditions
 from painel_porto import todos_os_slugs
 from referencias_ais import bandeira_por_mmsi, nome_tipo
 from scheduler import job_atualizar_praticagem, job_monitorar_saude_do_sistema, job_recalcular_indice_operacional
@@ -39,6 +40,29 @@ SAIDA = pathlib.Path(os.getenv("SAIDA_DADOS") or RAIZ / "painel" / "out" / "dado
 ESCUTA_SEGUNDOS = int(os.getenv("ESCUTA_SEGUNDOS", "480"))
 RETENCAO_DIAS = int(os.getenv("RETENCAO_DIAS", "7"))
 RASTRO_HORAS = 24
+PARALELO = int(os.getenv("OPEN_METEO_PARALELO", "8"))
+
+# Open-Meteo a partir das máquinas do GitHub: às vezes não responde. Sem isto,
+# cada chamada que falha espera 2 × 15 s, e a mesma consulta falha de novo no
+# índice, no painel e no resumo. Aqui: espera menor e, se uma consulta falhou
+# nesta rodada, as repetições dela falham na hora (o bloco fica "sem dado").
+sea_conditions.TIMEOUT_S = int(os.getenv("OPEN_METEO_TIMEOUT_S", "8"))
+_get_json_original = sea_conditions._get_json
+_falhas: set = set()
+
+
+def _get_json_rodada(url: str, params: dict) -> dict:
+    chave = (url, tuple(sorted(params.items())))
+    if chave in _falhas:
+        raise RuntimeError("sem resposta nesta rodada (já tentado)")
+    try:
+        return _get_json_original(url, params)
+    except Exception:
+        _falhas.add(chave)
+        raise
+
+
+sea_conditions._get_json = _get_json_rodada
 
 
 def log(msg: str) -> None:
@@ -133,18 +157,74 @@ def exportar_navios() -> None:
     log(f"Navios: {len(linhas)} conhecidos, {cards} cards/rastros.")
 
 
+def aquecer_open_meteo() -> None:
+    """Consulta o tempo de todos os portos em paralelo antes do índice e dos
+    painéis: depois disso, índice, painel e resumo leem do cache (10 min)."""
+    from concurrent.futures import ThreadPoolExecutor
+    from config.port_operations_config import PORT_CONFIGS
+    from painel_porto import MANAUS
+    from sea_conditions import buscar_condicoes_operacionais, buscar_tempo_porto
+
+    coords = [(c.lat, c.lon) for c in PORT_CONFIGS.values()]
+    tarefas = [lambda la=la, lo=lo: buscar_condicoes_operacionais(la, lo) for la, lo in coords]
+    tarefas += [lambda la=la, lo=lo: buscar_tempo_porto(la, lo) for la, lo in [*coords, (MANAUS["lat"], MANAUS["lon"])]]
+    with ThreadPoolExecutor(max_workers=PARALELO) as ex:
+        list(ex.map(lambda f: tentar_quieto(f), tarefas))
+    log(f"Open-Meteo: {len(_falhas)} consulta(s) sem resposta nesta rodada.")
+
+
+def tentar_quieto(funcao):
+    try:
+        return funcao()
+    except Exception:  # noqa: BLE001
+        return None
+
+
 def exportar_portos() -> None:
+    from concurrent.futures import ThreadPoolExecutor
+
     gravar("portos.json", api.listar_portos())
     gravar("portos/resumo.json", api.resumo(""))
-    for slug in todos_os_slugs():
-        dados = tentar(f"painel {slug}", lambda s=slug: api.painel_do_porto(s))
+    with ThreadPoolExecutor(max_workers=PARALELO) as ex:
+        paineis = dict(zip(todos_os_slugs(), ex.map(lambda s: tentar_quieto(lambda: api.painel_do_porto(s)), todos_os_slugs())))
+    for slug, dados in paineis.items():
         if dados:
             gravar(f"portos/{slug}/painel.json", dados)
+    log(f"Painéis: {sum(1 for d in paineis.values() if d)} de {len(paineis)} portos.")
+
+
+_frota: dict = {}
+
+
+def preparar_frota() -> None:
+    """MMSI pelo IMO e armador (com fonte) no cadastro, antes dos cards."""
+    import frota
+    cfg = frota.carregar()
+    _frota.update(cfg=cfg, navios=frota.aplicar_armadores(cfg))
+    achados = sum(1 for n in _frota["navios"].values() if n["mmsi"])
+    log(f"Frota: {achados} de {len(_frota['navios'])} navios com MMSI conhecido.")
+
+
+def exportar_frota() -> None:
+    import frota
+    if not _frota:
+        preparar_frota()
+    dados = frota.exportar_frota(_frota["cfg"], _frota["navios"])
+    gravar("frota.json", dados)
+    com_posicao = sum(1 for n in dados["navios"] if n["posicao"])
+    log(f"Frota: {com_posicao} navios com posição nos últimos {dados['retencao_dias']} dias.")
+    mmsis = {n["mmsi"] for n in _frota["navios"].values() if n["mmsi"]}
+    gravar("rastros.json", frota.exportar_rastros(mmsis))
 
 
 def exportar_schedule() -> None:
     from schedule_status import gerar_status
-    gravar("schedule.json", gerar_status())
+    dados = gerar_status()
+    # armador de cada navio do schedule, pelo IMO da frota (filtro na tela)
+    por_imo = {n["imo"]: n["armador"] for n in _frota.get("navios", {}).values()}
+    for n in dados["navios"]:
+        n["armador"] = por_imo.get(n["imo"])
+    gravar("schedule.json", dados)
 
 
 # ---------------------------------------------------------------- principal
@@ -156,11 +236,14 @@ def main() -> int:
     asyncio.run(coletar_ais())
 
     tentar("praticagem", job_atualizar_praticagem)
+    tentar("Open-Meteo (todos os portos)", aquecer_open_meteo)
     tentar("índice operacional e alertas", job_recalcular_indice_operacional)
     tentar("saúde do sistema", job_monitorar_saude_do_sistema)
     tentar("limpeza", lambda: apagar_posicoes_antigas(dias=RETENCAO_DIAS))
 
+    tentar("frota (MMSI e armador)", preparar_frota)
     tentar("navios", exportar_navios)
+    tentar("frota", exportar_frota)
     tentar("portos", exportar_portos)
     tentar("schedule", exportar_schedule)
 

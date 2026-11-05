@@ -17,9 +17,15 @@ barra dos portos. Open source e de custo zero: só fontes públicas e gratuitas.
   maré agora e curva do dia, vento e ondas, barra, calado com fonte, navios
   atracados, fundeados e a caminho. Manaus mostra a cota do Rio Negro.
 - **Resumo** dos portos escolhidos e **lista de portos**.
+- **Frota em destaque**: navios de cabotagem de `ais-service/config/frota.json`
+  (Log-In, Aliança, Mercosul Line, Norcoast) com cor por armador, nome no mapa
+  e última posição em até 7 dias. O seletor de armador mostra só os navios
+  dele e a lista, inclusive os sem sinal.
 - **Schedule**: o programado (`schedule/schedule.csv`, commit diário) comparado
   com o real do AIS — ETA, ETB e ETS, chegada/atracação/saída vistas no rastro,
-  atraso herdado pelas escalas seguintes, omissão.
+  atraso herdado pelas escalas seguintes, omissão. Qualquer pessoa também pode
+  arrastar o CSV de qualquer armador na tela: a análise roda no navegador dela
+  e o arquivo não sai do computador.
 
 ## Princípios
 

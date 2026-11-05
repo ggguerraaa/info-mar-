@@ -374,6 +374,8 @@ def gerar_status() -> dict:
         "gerado_em": agora.isoformat(),
         "tolerancia_h": CFG["tolerancia_h"],
         "avisos": avisos,
-        "portos": {k: {"nome": v["nome"], "lat": v["lat"], "lon": v["lon"]} for k, v in portos.items()},
+        # completos: o painel usa os mesmos portos e regras para o CSV arrastado no navegador
+        "portos": portos,
+        "regras": CFG,
         "navios": saida,
     }

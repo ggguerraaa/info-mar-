@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { IconeMapa, IconePorto, IconeResumo, Logo } from "./Icones";
+import { IconeMapa, IconePorto, IconeResumo, IconeSchedule, Logo } from "./Icones";
 
 // Barra lateral estreita e escura: a única superfície escura da interface.
 // No celular vira uma faixa no topo.
@@ -11,6 +11,7 @@ const ITENS = [
   { href: "/", rotulo: "Mapa", Icone: IconeMapa },
   { href: "/resumo/", rotulo: "Resumo", Icone: IconeResumo },
   { href: "/portos/", rotulo: "Portos", Icone: IconePorto },
+  { href: "/schedule/", rotulo: "Schedule", Icone: IconeSchedule },
 ];
 
 export default function Casca({ children }: { children: React.ReactNode }) {

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AVISO_COBERTURA, AVISO_NAVEGACAO, buscarJson, haQuantoTempo, type PortoMapa, type Trajetoria } from "@/lib/api";
+import { AVISO_COBERTURA, AVISO_NAVEGACAO, BASE_PATH, buscarJson, MODO_ESTATICO, haQuantoTempo, type PortoMapa, type Trajetoria } from "@/lib/api";
 import { useNaviosSalvos } from "@/lib/naviosSalvos";
 import Busca from "./Busca";
 import MeusNavios from "./MeusNavios";
@@ -41,7 +41,7 @@ export default function TelaMapa() {
     if (navio) q.set("navio", navio);
     if (porto) q.set("porto", porto);
     const destino = q.toString() ? `/?${q}` : "/";
-    if (destino !== `${window.location.pathname}${window.location.search}`) router.replace(destino, { scroll: false });
+    if (`${BASE_PATH}${destino}` !== `${window.location.pathname}${window.location.search}`) router.replace(destino, { scroll: false });
   }, [navio, porto, router]);
 
   // Rastro de 24 h do navio selecionado
@@ -146,7 +146,7 @@ export default function TelaMapa() {
         </div>
         <p className="cobertura painel">
           {AVISO_COBERTURA}{" "}
-          {status ? `${status.naVisao} navios nesta área, ${status.total} no total. Atualizado ${haQuantoTempo(status.em)}.` : "Carregando navios…"}
+          {status ? `${status.naVisao} navios nesta área, ${status.total} no total. Atualizado ${haQuantoTempo(status.em)}${MODO_ESTATICO ? " (nova leitura a cada ~30 min)" : ""}.` : "Carregando navios…"}
         </p>
         <p className="aviso-navegacao">{AVISO_NAVEGACAO}</p>
       </div>

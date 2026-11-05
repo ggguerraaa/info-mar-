@@ -1,91 +1,82 @@
-# Guia de deploy — Info-Maré no Render
+# Guia de deploy — Info-Maré no GitHub (sem servidor)
 
-Um serviço web gratuito no Render (Docker) com API + painel na mesma URL, banco
-SQLite com backup contínuo pelo Litestream e um pinger externo para o serviço
-não dormir.
+Tudo roda no GitHub, de graça em repositório público:
 
-Conferido em 02/11/2026 (confira de novo, isso muda):
-- **Render, plano gratuito**: 750 horas por mês por workspace (dá um serviço
-  24 h); dorme após 15 min sem tráfego de entrada e leva ~1 min para acordar;
-  disco apagado a cada reinício, deploy ou sono. A página do plano não exige
-  cartão para o gratuito; sem cartão, o serviço é suspenso se estourar banda ou
-  minutos de build. RAM do plano gratuito: confira na tela de criação.
-- **Cloudflare R2, gratuito**: 10 GB, 1 milhão de operações classe A e 10
-  milhões classe B por mês, sem custo de saída. A página de preços **não diz se
-  exige cartão**: confira no cadastro antes de criar a conta. Alternativa:
-  Backblaze B2 (também com 10 GB gratuitos; confira os termos).
-- **OpenFreeMap**: gratuito, sem chave, sem limite declarado, uso comercial
-  permitido; atribuição obrigatória (o MapLibre já mostra).
+- **GitHub Actions** (`.github/workflows/atualizar.yml`) liga uma máquina a
+  cada ~30 min, escuta o AISstream por 8 min, roda os jobs (praticagem, índice
+  operacional, alertas), compara o schedule e gera os dados em JSON.
+- **GitHub Pages** publica o painel (exportação estática do Next) junto com
+  esses JSON. Quem abre o link vê a última rodada.
+- **Branch `dados`** guarda o banco SQLite compactado entre uma rodada e a
+  outra (posições dos últimos 7 dias, cadastro dos navios, eventos do
+  schedule), sempre com um único commit, sem sujar o histórico da `main`.
 
-## 1. Antes de publicar o repositório
+Conferido em 05/11/2026 (confira de novo, isso muda): Actions e Pages são
+gratuitos e sem limite de minutos em repositório **público**; em repositório
+privado o plano Free dá 2.000 min/mês, e cada rodada gasta ~11 min (não cabe).
 
-1. **Troque a chave do AISstream.** Esta pasta não tinha git, então não há
-   histórico local para varrer — mas se o código já esteve em algum repositório
-   (GitHub, outra máquina), trate a chave como vazada. Gere uma nova no site do
-   AISstream e use só a nova no Render.
-2. O repositório novo tem um único commit, varrido com o gitleaks 8.30.1
-   (nenhum segredo). Rode de novo antes de cada publicação:
-   `gitleaks git --no-banner -v .`
-3. `.env` reais ficam fora (`.gitignore`); só os `.env.example` entram.
-4. Termos de uso: AISstream, páginas das praticagens e do Porto de Manaus
-   ainda não foram conferidos. Se algum proibir, desligue a fonte (o painel
-   mostra "sem dado").
+## O que muda em relação ao Render
 
-## 2. Armazenamento para o Litestream (R2)
+| | Render (antes) | GitHub (agora) |
+|---|---|---|
+| Mapa | ao vivo, atualiza a cada 12 s | foto da última rodada (até ~30 min) |
+| Coleta AIS | 24 h | 8 min a cada 30 min (~27% do tempo) |
+| Rastro | 1 ponto/min contínuo | 1 ponto/min dentro das janelas de escuta |
+| Servidor, pinger, Litestream, R2 | precisava | nada |
 
-1. Crie um bucket (ex.: `info-mare-backup`) e um token de API com permissão
-   de leitura e escrita **só nesse bucket**.
-2. Anote: endpoint S3 (`https://<conta>.r2.cloudflarestorage.com`), Access Key
-   ID e Secret Access Key.
+O cron do Actions pode atrasar alguns minutos em horário de pico.
 
-## 3. Render
+## 1. Desligue o Render (obrigatório)
 
-1. Publique o repositório no GitHub (público).
-2. No Render: **New → Blueprint** → escolha o repositório. Ele lê o
-   `render.yaml` e pede os valores marcados como segredo:
-   - `AISSTREAM_API_KEY` (a chave nova)
-   - `LITESTREAM_BUCKET`, `LITESTREAM_ENDPOINT`,
-     `LITESTREAM_ACCESS_KEY_ID`, `LITESTREAM_SECRET_ACCESS_KEY`
-3. O build compila o painel e o backend numa imagem só. Ao subir, o serviço:
-   restaura o banco do R2 (se houver), começa a replicar a cada 10 s e conecta
-   ao AISstream.
-4. Teste: `https://<serviço>.onrender.com/health` responde
-   `{"status":"ok","ais_conectado":true}` em até 1 min.
+O AISstream aceita **uma conexão por chave**. Com o Render ligado, ele e o
+Actions se derrubam. No Render: **Settings → Suspend service** (ou apague o
+serviço). O `render.yaml`, o `Dockerfile` e `deploy/` continuam no repositório
+só para quem quiser rodar com Docker; o Render não é mais usado.
 
-**Um coletor por chave.** Em cada deploy o Render sobe a instância nova antes
-de desligar a antiga; a nova pode receber 429 do AISstream por alguns segundos.
-O coletor espera 1 min e tenta de novo (espera crescente até 5 min). Não rode o
-backend local com a mesma chave ao mesmo tempo.
+## 2. Configurar o GitHub (uma vez)
 
-## 4. Pinger (o serviço não pode dormir: dormindo, o AIS para)
+1. **Settings → Secrets and variables → Actions → New repository secret**:
+   `AISSTREAM_API_KEY` = a chave do aisstream.io. Se a chave já esteve em algum
+   lugar público, gere uma nova antes.
+2. **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+3. Repositório público (senão os minutos acabam).
+4. **Actions → Atualizar Info-Maré → Run workflow** para a primeira rodada. O
+   link do site sai no resumo da execução:
+   `https://<usuario>.github.io/<repositorio>/`.
 
-UptimeRobot ou cron-job.org (gratuitos): monitor HTTP em
-`https://<serviço>.onrender.com/health` a cada **5 min**. O `/health` é leve e
-não conta no limite de requisições. Mesmo assim pode haver lacunas: os
-períodos de coleta ficam em `/api/sistema/coleta-ais`.
+Rodadas de `push` (schedule novo, código novo) escutam o AIS só 1,5 min, para
+publicar rápido; as agendadas escutam 8 min.
 
-## 5. Primeiras horas: medir
+## 3. Rotina: schedule diário
 
-O log do Render mostra a cada 10 min uma linha `Medição AIS:` com mensagens
-por segundo, navios em memória, memória do processo (RSS) e tamanho do banco.
-`/api/sistema/saude` mostra o mesmo. Se a memória chegar perto do limite da
-instância: reduza a caixa (`AIS_CAIXAS`) ou aumente
-`AIS_INTERVALO_GRAVACAO_S`. A medição local de 02/11/2026 deu 0,7 msg/s e ~250
-navios por hora — folga grande.
+Atualize `schedule/schedule.csv` e faça commit na `main` (pelo VS Code ou pelo
+botão de lápis do próprio GitHub). O push dispara uma rodada; a tela
+**Schedule** do painel mostra programado x real. Formato em
+[schedule/LEIA-ME.md](schedule/LEIA-ME.md).
 
-## 6. Teste de reinício
+## 4. Conferir uma rodada
 
-1. Salve um navio em "Meus navios" e anote o rastro de 24 h dele.
-2. No Render: **Manual Deploy → Restart service**.
-3. Ao voltar: o mapa já mostra os navios (memória refeita do banco
-   restaurado), o card do navio mostra o rastro anterior e a busca acha os
-   navios já vistos.
+Na aba **Actions**, cada execução mostra no log:
+- `AIS: N navios com posição...` (com a chave certa, N > 0)
+- uma linha por fonte (`praticagem: ok`, `painel santos: ok`...). Fonte que
+  falhou aparece como `FALHOU` e o painel mostra "sem dado" naquele bloco.
+- `Guardar o banco na branch "dados"` com o tamanho do arquivo.
 
-Testado localmente (sem R2): após derrubar o processo, 253 de 253 navios
-voltaram para a memória e o rastro ficou intacto. **O caminho com Litestream
-não foi testado nesta máquina (sem Docker)**: faça este teste no primeiro deploy.
+Fontes que ainda não foram testadas a partir das máquinas do GitHub (EUA):
+sites das praticagens, Porto de Manaus e ANA. Se alguma bloquear IP de fora do
+Brasil, o bloco correspondente fica "sem dado".
 
-## 7. Tábua de maré anual
+## 5. Rodar localmente
+
+```powershell
+cd ais-service
+.\.venv\Scripts\python.exe gerar_estatico.py          # escuta 8 min e gera painel\out\dados
+$env:ESCUTA_SEGUNDOS=0; .\.venv\Scripts\python.exe gerar_estatico.py   # só gera, sem AIS
+```
+
+Não rode com a chave enquanto o Actions estiver no meio de uma rodada.
+
+## 6. Tábua de maré anual
 
 Uma vez por ano, quando a DHN publicar a tábua do ano seguinte, baixe os PDFs à
 mão (o site bloqueia robôs) e atualize `ais-service/data/mare/`.

@@ -4,7 +4,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import * as maplibregl from "maplibre-gl";
 import type { GeoJSONSource, Map as MapaGL, MapLayerMouseEvent } from "maplibre-gl";
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { buscarJson, ErroApi, ESTILO_MAPA_URL, type PortoMapa, type RespostaNavios } from "@/lib/api";
+import { BASE_PATH, buscarJson, ErroApi, ESTILO_MAPA_URL, MODO_ESTATICO, type PortoMapa, type RespostaNavios } from "@/lib/api";
 import { iconeNavio, iconePonto, iconePorto, ESCALA_ICONES } from "./icones";
 
 // Mapa em WebGL (MapLibre): os navios são uma camada de símbolos, não
@@ -15,7 +15,8 @@ const COR = {
   gelo: "#EEEEEE", espuma: "#C3E4E9", nevoa: "#88B4BE", corrente: "#056C89", profundo: "#023653",
   texto2: "#41667D",
 };
-const ATUALIZAR_A_CADA_MS = 12_000;
+// Estático: os arquivos mudam a cada ~30 min; 1 min basta para pegar a rodada nova.
+const ATUALIZAR_A_CADA_MS = MODO_ESTATICO ? 60_000 : 12_000;
 const VELHO_S = 30 * 60;
 const CENTRO_BRASIL: [number, number] = [-45, -16];
 
@@ -207,7 +208,7 @@ export default function Mapa(props: MapaProps) {
   useEffect(() => {
     if (!elemento.current) return;
     if (!workerDefinido) {
-      maplibregl.setWorkerUrl(new URL("/maplibre/maplibre-gl-worker.mjs", window.location.href).href);
+      maplibregl.setWorkerUrl(new URL(`${BASE_PATH}/maplibre/maplibre-gl-worker.mjs`, window.location.href).href);
       workerDefinido = true;
     }
     const reduzirMovimento = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

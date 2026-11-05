@@ -23,3 +23,6 @@ painel/*.tsbuildinfo
 painel/next-env.d.ts
 
 .DS_Store
+
+# Banco das rodadas do Actions (fica na branch "dados")
+estado/

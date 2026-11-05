@@ -1,0 +1,120 @@
+# Info-Maré sem servidor: a cada ~30 min o GitHub liga uma máquina, escuta o
+# AIS por 8 min, roda os jobs (praticagem, índice, alertas), compara o
+# schedule e publica painel + dados no GitHub Pages. Depois a máquina some.
+#
+# Uma vez só, no GitHub:
+#   Settings → Secrets and variables → Actions → New repository secret
+#       AISSTREAM_API_KEY = chave do aisstream.io
+#   Settings → Pages → Build and deployment → Source: GitHub Actions
+#
+# O banco (posições, cadastro dos navios, eventos do schedule) passa de uma
+# rodada para a outra na branch "dados", sempre com 1 commit só.
+
+name: Atualizar Info-Maré
+
+on:
+  schedule:
+    - cron: "4,34 * * * *"      # UTC; o GitHub pode atrasar alguns minutos
+  push:
+    branches: [main]
+    paths:
+      - "schedule/**"
+      - "ais-service/**"
+      - "painel/**"
+      - ".github/workflows/atualizar.yml"
+  workflow_dispatch:
+    inputs:
+      escuta_segundos:
+        description: "Segundos escutando o AIS"
+        default: "480"
+
+permissions:
+  contents: write   # gravar o banco na branch "dados"
+  pages: write
+  id-token: write
+
+concurrency:
+  group: info-mare          # nunca duas rodadas juntas: o AISstream aceita 1 conexão por chave
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      DB_PATH: ${{ github.workspace }}/estado/tabua_mare.db
+      PYTHONUNBUFFERED: "1"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Recuperar o banco da rodada anterior
+        run: |
+          mkdir -p estado
+          if git ls-remote --exit-code --heads origin dados >/dev/null; then
+            git fetch --depth=1 origin dados
+            git show origin/dados:tabua_mare.db.gz | gunzip > estado/tabua_mare.db
+            ls -lh estado/
+          else
+            echo "Primeira rodada: banco novo."
+          fi
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      # ---------- painel (exportação estática do Next) ----------
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: painel/package-lock.json
+      - name: Compilar o painel
+        working-directory: painel
+        env:
+          NEXT_PUBLIC_BACKEND_URL: ""                       # vazio = lê os arquivos de /dados
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.pages.outputs.base_path }}
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+
+      # ---------- coleta e dados ----------
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: ais-service/requirements.txt
+      - run: pip install -r ais-service/requirements.txt
+
+      - name: Escutar o AIS e gerar os dados
+        working-directory: ais-service
+        env:
+          AISSTREAM_API_KEY: ${{ secrets.AISSTREAM_API_KEY }}
+          # rodada agendada: 8 min; push (schedule novo) só 1,5 min, para sair rápido
+          ESCUTA_SEGUNDOS: ${{ github.event.inputs.escuta_segundos || (github.event_name == 'schedule' && '480' || '90') }}
+          INTERVALO_MIN: "30"
+        run: python gerar_estatico.py
+
+      - name: Guardar o banco na branch "dados"
+        if: always() && hashFiles('estado/tabua_mare.db') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          d="$RUNNER_TEMP/dados" && rm -rf "$d" && mkdir -p "$d" && cd "$d"
+          gzip -9c "$GITHUB_WORKSPACE/estado/tabua_mare.db" > tabua_mare.db.gz
+          ls -lh tabua_mare.db.gz
+          git init -q -b dados
+          git add tabua_mare.db.gz
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -qm "banco $(date -u +%FT%TZ)"
+          git push -qf "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" dados
+
+      # ---------- publicar ----------
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: painel/out
+      - id: deploy
+        uses: actions/deploy-pages@v4

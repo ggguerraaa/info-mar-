@@ -1,0 +1,8 @@
+{
+  "_leia": "Portos do schedule que o painel não cobre. slug: nome, lat, lon; opcionais: apelidos, fator_rota, raio_fundeio_nm, raio_berco_nm.",
+  "pecem": {"nome": "Pecém", "lat": -3.535, "lon": -38.800, "apelidos": ["PECEM", "BRPEC"]},
+  "itapoa": {"nome": "Itapoá", "lat": -26.120, "lon": -48.610, "apelidos": ["BRIOA"]},
+  "navegantes": {"nome": "Navegantes", "lat": -26.890, "lon": -48.660, "apelidos": ["BRNVT"]},
+  "buenos_aires": {"nome": "Buenos Aires", "lat": -34.580, "lon": -58.370, "fator_rota": 1.25, "apelidos": ["BUE", "ARBUE"]},
+  "montevideu": {"nome": "Montevidéu", "lat": -34.900, "lon": -56.210, "apelidos": ["MONTEVIDEO", "UYMVD"]}
+}

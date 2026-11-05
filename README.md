@@ -9,14 +9,17 @@ barra dos portos. Open source e de custo zero: só fontes públicas e gratuitas.
 ## O que faz
 
 - **Mapa com todos os navios** que as antenas terrestres do AISstream captam na
-  costa (Classe A e B), atualizado a cada 12 s. Cada navio mostra a idade da
-  última posição.
+  costa (Classe A e B), com nova leitura a cada ~30 min. Cada navio mostra a
+  idade da última posição.
 - **Buscar e salvar navios** por nome, MMSI ou IMO. "Meus navios" fica no
   navegador de cada pessoa (sem conta), com exportar/importar em JSON.
 - **Clicar num porto**: situação, índice operacional (com a conta explicada),
   maré agora e curva do dia, vento e ondas, barra, calado com fonte, navios
   atracados, fundeados e a caminho. Manaus mostra a cota do Rio Negro.
 - **Resumo** dos portos escolhidos e **lista de portos**.
+- **Schedule**: o programado (`schedule/schedule.csv`, commit diário) comparado
+  com o real do AIS — ETA, ETB e ETS, chegada/atracação/saída vistas no rastro,
+  atraso herdado pelas escalas seguintes, omissão.
 
 ## Princípios
 
@@ -29,21 +32,21 @@ barra dos portos. Open source e de custo zero: só fontes públicas e gratuitas.
 
 ## Arquitetura
 
-Um serviço só (FastAPI) que coleta o AIS, roda os jobs, responde a API e serve
-o painel compilado (exportação estática do Next.js).
+Sem servidor. O GitHub Actions roda a cada ~30 min: escuta o AIS por 8 min,
+roda os jobs, gera os dados em JSON e publica tudo no GitHub Pages
+(guia: [GUIA-DEPLOY.md](GUIA-DEPLOY.md)).
 
 ```
-ais-service/   Backend Python: coletor AIS, jobs, API (backend_app.py)
-painel/        Frontend Next.js + MapLibre GL (exportação estática em painel/out)
-deploy/        Início do serviço e configuração do Litestream
-docs/          Fontes (normas) e medições
-Dockerfile     Imagem única (painel + backend + Litestream)
-render.yaml    Blueprint do Render
+.github/workflows/   Rodada do Actions (coleta + build + publicação)
+ais-service/         Python: coletor AIS, jobs, gerar_estatico.py (rodada),
+                     schedule_status.py (programado x real), backend_app.py (API p/ desenvolvimento)
+painel/              Next.js + MapLibre GL, exportação estática; lê /dados/*.json
+schedule/            schedule.csv (programado) e portos_extra.json
+docs/                Fontes (normas) e medições
 ```
 
-Banco: SQLite, em WAL, com backup contínuo pelo Litestream. A última posição
-de cada navio fica em memória; no banco, no máximo 1 posição por navio por
-minuto, apagadas após 7 dias.
+Banco: SQLite, guardado compactado na branch `dados` entre as rodadas. No
+máximo 1 posição por navio por minuto, apagadas após 7 dias.
 
 ## Fontes de dados
 
@@ -65,18 +68,19 @@ cd ais-service
 python -m venv .venv
 .venv/Scripts/python -m pip install -r requirements.txt     # Windows
 cp .env.example .env        # preencher AISSTREAM_API_KEY
-.venv/Scripts/python -m uvicorn backend_app:app --port 8000
 
-cd ../painel
-npm install
-npm run build               # gera painel/out; o backend passa a servir em http://localhost:8000
-# ou, para desenvolver: cp .env.example .env.local && npm run dev  (http://localhost:3000)
+# Igual ao Actions: escuta, gera painel/out/dados e para
+.venv/Scripts/python gerar_estatico.py
+
+# Ou o backend ao vivo para desenvolver o painel
+.venv/Scripts/python -m uvicorn backend_app:app --port 8000
+cd ../painel && npm install && cp .env.example .env.local && npm run dev   # http://localhost:3000
 ```
 
-Só um coletor por chave do AISstream: não rode o backend local enquanto o do
-Render estiver no ar com a mesma chave.
+Só um coletor por chave do AISstream: não rode nada local com a chave enquanto
+o Actions estiver no meio de uma rodada.
 
-Deploy: [GUIA-DEPLOY.md](GUIA-DEPLOY.md). Testes: [TESTES.md](TESTES.md).
+Testes: [TESTES.md](TESTES.md).
 
 ## Licença
 

@@ -716,6 +716,14 @@ def fila_navios(slug: str):
     }
 
 
+@app.get("/api/schedule")
+def schedule_programado_x_real():
+    """Schedule (schedule/schedule.csv) comparado com o rastro AIS — em
+    produção o GitHub Actions grava isto em dados/schedule.json."""
+    from schedule_status import gerar_status
+    return gerar_status()
+
+
 @app.get("/api/navios/{mmsi}/trajetoria")
 def trajetoria_navio(mmsi: str, horas: int = Query(default=24, ge=1, le=168)):
     """Rastro do navio (últimas N horas, no máximo 1 ponto por minuto) para

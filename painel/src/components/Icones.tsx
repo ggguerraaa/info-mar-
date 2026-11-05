@@ -40,6 +40,18 @@ export function IconeResumo({ tamanho = 22 }: P) {
   );
 }
 
+/** Schedule: calendário com relógio. */
+export function IconeSchedule({ tamanho = 22 }: P) {
+  return (
+    <svg {...base(tamanho)}>
+      <path d="M20 11V6.5A1.5 1.5 0 0 0 18.5 5h-13A1.5 1.5 0 0 0 4 6.5v12A1.5 1.5 0 0 0 5.5 20H11" />
+      <path d="M4 9.5h16M8.5 3v4M15.5 3v4" />
+      <circle cx="17" cy="17" r="4" />
+      <path d="M17 15.3V17l1.2 1" />
+    </svg>
+  );
+}
+
 /** Porto: pino com barco. */
 export function IconePorto({ tamanho = 22 }: P) {
   return (
